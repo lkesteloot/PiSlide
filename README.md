@@ -1,2 +1,33 @@
 # PiSlide
-Slideshow program for the Raspberry Pi
+
+This program displays a continuous slide show of images from the local disk.
+It's intended to be run in a picture frame or a monitor mounted on a wall,
+for example in a kitchen. It has the following features:
+
+* For the current photo it shows the name and date, as well as its rating (one
+  to five stars).
+* It lets you rotate photos. The rotation is recorded in the database without
+  modifying the photo. This allows you to rsync photos from another computer.
+* You can filter the photos by rating or date.
+* You can email photos to friends.
+* If you have a Sonos music system on your network, it will show the current
+  song and artist, and let you play a radio station with one key, stop the music,
+  or toggle mute.
+* It displays the time.
+
+# License
+
+Copyright 2017 Lawrence Kesteloot
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
