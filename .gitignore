@@ -1,3 +1,4 @@
 *.log
 *.db
 *.db-journal
+config.py
