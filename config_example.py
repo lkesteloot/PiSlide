@@ -37,6 +37,7 @@ UNWANTED_DIRS = [
     "Private",
 ]
 
-# In a pathname part has this prefix, the whole part is ignored.
+# In a pathname part has this prefix, the whole part is ignored when displaying
+# the label.
 BAD_FILE_PREFIXES = ["DSC_", "PICT", "100_", "IMG_", "P101", "VIP_", "Image",
         "pick", "dcp_", "DSCF"]

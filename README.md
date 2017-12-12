@@ -16,11 +16,43 @@ for example in a kitchen. It has the following features:
   or toggle mute.
 * It displays the time.
 
+# Using the software
+
+* The left and right arrow keys move to the previous and next slide.
+* The space bar toggles pausing the slide show. After a few minutes the
+  slide show is automatically unpaused.
+* The "L" and "R" keys rotate the photo left and right. The photo file on disk
+  is unmodified; only the way it's displayed is affected.
+* The digits "1" to "5" rate the photo. The default rating is 3, and the default
+  filter only shows photos with a rating of at least 3. Here is the suggested
+  way to think about these numbers:
+  * A "1" means "I'm okay deleting this photo."
+  * A "2" means "I don't want to show this photo on this slide show."
+  * A "3" means "This photo is good enough to show on this slide show." This is the
+    default value.
+  * A "4" means "For a party we should only show these photos." You can use the
+    `--min_rating` command-line flag to only show photos with a rating of 4 or above.
+  * A "5" means "On my deathbed I want to flip through a photo album with this photo in it."
+* The "E" key emails the photo.
+* The "Shift-Q" key quits the program.
+* The "Shift-D" key toggles some debugging information.
+* If you have a Sonos system hooked up, the follow keys are also enabled:
+  * The "M" key toggles mute.
+  * The "S" key stops the music.
+  * The "F1" to "F10" keys play the corresponding radio station in your Sonos
+    radio station favorites list.
+
 # Configuring the software
 
 Copy the file `config_example.py` to `config.py` and edit the values. The software
 pre-processes images into a parallel directory, so find a place for those (not
 necessarily a sibling of the original, as suggested by the example config file).
+
+Pip install the following packages:
+
+* `pi3d`
+* `soco` if you want to control a Sonos.
+* `boto3` if you want to send emails.
 
 # Configuring the Raspberry Pi
 
@@ -31,24 +63,13 @@ Put this in `/boot/config.txt`:
     hdmi_drive=2      (ONLY FOR HDMI DISPLAYS, NOT DVI)
     gpu_mem=256
 
-Also in `/etc/kbd/config`, modify this line:
+In `/etc/kbd/config`, modify this line to disable the screen saver:
 
     BLANK_TIME=0
 
 For pi3d:
 
     sudo pip install Pillow
-
-To mount the external drive, put this in `/etc/fstab`:
-
-    UUID=9a435c70-07c0-48e9-bc8a-a4d6902595db /mnt/data	ext4	defaults,noatime  0       0
-
-Find the UUID by looking in `/dev/disk/by-uuid`.
-
-If the boot sequence tries to mount the drive before the USB driver has detected it,
-add this to `/boot/cmdline.txt`:
-
-    rootdelay=5
 
 # Contributing
 
