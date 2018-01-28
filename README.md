@@ -35,7 +35,7 @@ for example in a kitchen. It has the following features:
   * A "5" means "On my deathbed I want to flip through a photo album with this photo in it."
 * The "E" key emails the photo.
 * The "Shift-Q" key quits the program.
-* The "Shift-D" key toggles some debugging information.
+* The "Shift-D" key toggles the display of debugging information.
 * If you have a Sonos system hooked up, the follow keys are also enabled:
   * The "M" key toggles mute.
   * The "S" key stops the music.
@@ -51,6 +51,7 @@ necessarily a sibling of the original, as suggested by the example config file).
 Pip install the following packages:
 
 * `pi3d`
+* `Pillow` for pi3d
 * `soco` if you want to control a Sonos.
 * `boto3` if you want to send emails.
 
@@ -67,10 +68,6 @@ In `/etc/kbd/config`, modify this line to disable the screen saver:
 
     BLANK_TIME=0
 
-For pi3d:
-
-    sudo pip install Pillow
-
 # Contributing
 
 Conventions in the code:
@@ -81,7 +78,7 @@ Conventions in the code:
 
 # License
 
-Copyright 2017 Lawrence Kesteloot
+Copyright 2018 Lawrence Kesteloot
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

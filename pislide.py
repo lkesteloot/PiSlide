@@ -1,4 +1,4 @@
-# Copyright 2017 Lawrence Kesteloot
+# Copyright 2018 Lawrence Kesteloot
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ TIME_TOP_DISPLAY_MARGIN = 50
 TRACK_TOP_DISPLAY_MARGIN = 150
 MUSIC_LEADING = 40
 STATION_LEADING = 60
-EMAIL_LEADING = 70
+EMAIL_LEADING = 60
 FIRST_FUNCTION_KEY = 265
 MAX_SUGGESTED_EMAILS = 8
 MAX_NO_FILE_WARNINGS = 10
@@ -79,13 +79,16 @@ MUSIC_COLOR = (255, 255, 255, 100)
 STATION_COLOR = (255, 255, 255, 200)
 EMAIL_COLOR = (255, 255, 255, 255)
 print "Loading fonts..."
-TEXT_FONT = pi3d.Font("FreeSans.ttf", TEXT_COLOR, font_size=48)
-DATE_FONT = pi3d.Font("FreeSans.ttf", DATE_COLOR, font_size=40)
-TIME_FONT = pi3d.Font("FreeSans.ttf", TIME_COLOR, font_size=64)
-TRACK_FONT = pi3d.Font("FreeSans.ttf", MUSIC_COLOR, font_size=48)
-ARTIST_FONT = pi3d.Font("FreeSans.ttf", MUSIC_COLOR, font_size=32)
-STATION_FONT = pi3d.Font("FreeSans.ttf", STATION_COLOR, font_size=48)
-EMAIL_FONT = pi3d.Font("FreeSans.ttf", EMAIL_COLOR, font_size=64)
+# There seems to be a bug in newer versions of pi3d where text in large fonts show some
+# junk above and below the text. A size of 48 seems to work fine.
+MAX_FONT_SIZE = 48
+TEXT_FONT = pi3d.Font("FreeSans.ttf", TEXT_COLOR, font_size=min(48, MAX_FONT_SIZE))
+DATE_FONT = pi3d.Font("FreeSans.ttf", DATE_COLOR, font_size=min(40, MAX_FONT_SIZE))
+TIME_FONT = pi3d.Font("FreeSans.ttf", TIME_COLOR, font_size=min(64, MAX_FONT_SIZE))
+TRACK_FONT = pi3d.Font("FreeSans.ttf", MUSIC_COLOR, font_size=min(48, MAX_FONT_SIZE))
+ARTIST_FONT = pi3d.Font("FreeSans.ttf", MUSIC_COLOR, font_size=min(32, MAX_FONT_SIZE))
+STATION_FONT = pi3d.Font("FreeSans.ttf", STATION_COLOR, font_size=min(48, MAX_FONT_SIZE))
+EMAIL_FONT = pi3d.Font("FreeSans.ttf", EMAIL_COLOR, font_size=min(64, MAX_FONT_SIZE))
 
 g_frame_count = 0
 
