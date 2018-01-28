@@ -68,13 +68,25 @@ In `/etc/kbd/config`, modify this line to disable the screen saver:
 
     BLANK_TIME=0
 
+# Running the software
+
+Usage:
+
+    % python pislide.py [args]
+
+Args:
+
+* `--min_rating STARS`: Show only photos with a rating of `STARS`, from 1 to 5 (default 3).
+* `--min_days DAYS`: Show only photos that are at least `DAYS` old (default no minimum).
+* `--max_days DAYS`: Show only photos that are at most `DAYS` old (default no maximum).
+
 # Contributing
 
 Conventions in the code:
 
-* *filename*: Only the file part (foo.jpg).
-* *pathname*: Relative to a (photo) root (`Vacation/foo.jpg`).
-* *absolute_pathname*: Relative to filesystem root (`/mnt/data/photos/Vacation/foo.jpg`).
+* `filename`: Only the file part (`foo.jpg`).
+* `pathname`: Relative to a (photo) root (`Vacation/foo.jpg`).
+* `absolute_pathname`: Relative to filesystem root (`/mnt/data/photos/Vacation/foo.jpg`).
 
 # License
 

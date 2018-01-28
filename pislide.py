@@ -30,13 +30,14 @@ import pi3d
 import sha
 import collections
 
-import sonos
 import db
 import email_service
 from model import Photo, PhotoFile, Email
 import preprocess
 from config import ROOT_DIR, PROCESSED_ROOT_DIR, EMAIL_FROM, UNWANTED_DIRS, BAD_PARTS, \
-        BAD_FILE_PREFIXES
+        BAD_FILE_PREFIXES, ENABLE_SONOS
+if ENABLE_SONOS:
+    import sonos
 
 # These are for debugging, should normally be False:
 QUICK_SPEED = False
@@ -634,8 +635,9 @@ class Slideshow(object):
 
         self.slide_cache = SlideCache(photos, self.slide_loader)
 
-        self.sonos = sonos.SonosController()
-        self.sonos.start()
+        self.sonos = sonos.SonosController() if ENABLE_SONOS else None
+        if self.sonos:
+            self.sonos.start()
         self.sonos_status = None
 
         self.debug = DEFAULT_DEBUG
@@ -667,7 +669,8 @@ class Slideshow(object):
         # Blocks until these threads are dead, so we don't get exceptions
         # while shutting down the interpreter.
         self.slide_loader.stop()
-        self.sonos.stop()
+        if self.sonos:
+            self.sonos.stop()
 
     # Returns whether we took the key.
     def take_key(self, key):
@@ -868,6 +871,9 @@ class Slideshow(object):
         string.draw()
 
     def draw_sonos(self):
+        if not self.sonos:
+            return
+
         sonos_status = self.sonos.get_status()
         if sonos_status:
             self.sonos_status = sonos_status
@@ -954,13 +960,16 @@ class Slideshow(object):
             next_slide.move(self.paused, self.prompting_email, next_time_offset)
 
     def mute(self):
-        self.sonos.send_command("mute")
+        if self.sonos:
+            self.sonos.send_command("mute")
 
     def stop_music(self):
-        self.sonos.send_command("stop")
+        if self.sonos:
+            self.sonos.send_command("stop")
 
     def play_radio_station(self, index):
-        self.sonos.send_command("play_radio_station", index)
+        if self.sonos:
+            self.sonos.send_command("play_radio_station", index)
 
     # Show the email prompt.
     def prompt_email(self):

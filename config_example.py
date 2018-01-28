@@ -1,5 +1,5 @@
 
-# Blank configuration. Fill out the values and rename this to config.py.
+# Blank configuration. Rename this to config.py and fill out the values.
 
 import os
 
@@ -9,6 +9,9 @@ DATA_DIR = "/mnt/data"
 ROOT_DIR = os.path.join(DATA_DIR, "photos")
 # The location of the preprocessed photos.
 PROCESSED_ROOT_DIR = os.path.join(DATA_DIR, "processed_photos")
+
+# Flags.
+ENABLE_SONOS = False
 
 # People we can email from.
 EMAIL_FROM = [
@@ -37,7 +40,7 @@ UNWANTED_DIRS = [
     "Private",
 ]
 
-# In a pathname part has this prefix, the whole part is ignored when displaying
+# If a pathname part has this prefix, the whole part is ignored when displaying
 # the label.
 BAD_FILE_PREFIXES = ["DSC_", "PICT", "100_", "IMG_", "P101", "VIP_", "Image",
         "pick", "dcp_", "DSCF"]
