@@ -44,3 +44,8 @@ UNWANTED_DIRS = [
 # the label.
 BAD_FILE_PREFIXES = ["DSC_", "PICT", "100_", "IMG_", "P101", "VIP_", "Image",
         "pick", "dcp_", "DSCF"]
+
+# Fill this in if you want to display NextBus information with the "b" key.
+NEXTBUS_AGENCY_TAG = None    # E.g., "sf-muni"
+NEXTBUS_STOP_ID = None
+

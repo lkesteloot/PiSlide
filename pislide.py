@@ -35,9 +35,11 @@ import email_service
 from model import Photo, PhotoFile, Email
 import preprocess
 from config import ROOT_DIR, PROCESSED_ROOT_DIR, EMAIL_FROM, UNWANTED_DIRS, BAD_PARTS, \
-        BAD_FILE_PREFIXES, ENABLE_SONOS
+        BAD_FILE_PREFIXES, ENABLE_SONOS, NEXTBUS_AGENCY_TAG, NEXTBUS_STOP_ID
 if ENABLE_SONOS:
     import sonos
+if NEXTBUS_AGENCY_TAG:
+    import nextbus
 
 # These are for debugging, should normally be False:
 QUICK_SPEED = False
@@ -59,6 +61,8 @@ TIME_TOP_DISPLAY_MARGIN = 50
 TRACK_TOP_DISPLAY_MARGIN = 150
 MUSIC_LEADING = 40
 STATION_LEADING = 60
+BUS_MAJOR_LEADING = 45
+BUS_MINOR_LEADING = 35
 EMAIL_LEADING = 60
 FIRST_FUNCTION_KEY = 265
 MAX_SUGGESTED_EMAILS = 8
@@ -79,6 +83,7 @@ TIME_COLOR = (255, 255, 255, 100)
 MUSIC_COLOR = (255, 255, 255, 100)
 STATION_COLOR = (255, 255, 255, 200)
 EMAIL_COLOR = (255, 255, 255, 255)
+BUS_COLOR = (255, 255, 255, 200)
 print "Loading fonts..."
 # There seems to be a bug in newer versions of pi3d where text in large fonts show some
 # junk above and below the text. A size of 48 seems to work fine.
@@ -90,6 +95,8 @@ TRACK_FONT = pi3d.Font("FreeSans.ttf", MUSIC_COLOR, font_size=min(48, MAX_FONT_S
 ARTIST_FONT = pi3d.Font("FreeSans.ttf", MUSIC_COLOR, font_size=min(32, MAX_FONT_SIZE))
 STATION_FONT = pi3d.Font("FreeSans.ttf", STATION_COLOR, font_size=min(48, MAX_FONT_SIZE))
 EMAIL_FONT = pi3d.Font("FreeSans.ttf", EMAIL_COLOR, font_size=min(64, MAX_FONT_SIZE))
+BUS_MAJOR_FONT = pi3d.Font("FreeSans.ttf", BUS_COLOR, font_size=min(48, MAX_FONT_SIZE))
+BUS_MINOR_FONT = pi3d.Font("FreeSans.ttf", BUS_COLOR, font_size=min(32, MAX_FONT_SIZE))
 
 g_frame_count = 0
 
@@ -290,6 +297,67 @@ class CachedString(object):
             self.string.positionY(y)
 
         return self.string
+
+class NextbusFetcher(object):
+    def __init__(self):
+        self.logger = logging.getLogger("nextbus")
+        self.logger.setLevel(logging.DEBUG)
+
+        self.fetching = False
+        self.thread = None
+        self.running = True
+
+        # Bool for whether fetching:
+        self.command_queue = Queue.Queue()
+
+        # Predictions objects:
+        self.predictions_queue = Queue.Queue()
+
+    def start(self):
+        self.thread = threading.Thread(target=self._loop)
+        self.thread.daemon = True
+        self.thread.start()
+
+    def stop(self):
+        # I think this is thread-safe.
+        self.running = False
+
+        # Exit the get().
+        self.set_fetching(False)
+
+        if self.thread:
+            self.thread.join()
+
+    # Set whether to periodically fetch predictions.
+    def set_fetching(self, fetching):
+        self.command_queue.put(fetching)
+
+    # Gets the most recent predictions, or None if there aren't any.
+    def get_predictions(self):
+        try:
+            return self.predictions_queue.get_nowait()
+        except Queue.Empty:
+            return None
+
+    # Runs in the other thread.
+    def _loop(self):
+        while self.running:
+            try:
+                try:
+                    self.fetching = self.command_queue.get(True, 10)
+                except Queue.Empty:
+                    # No problem, ignore.
+                    pass
+
+                if self.fetching:
+                    predictions = nextbus.get_predictions_for_stop(NEXTBUS_AGENCY_TAG, NEXTBUS_STOP_ID)
+                    self.predictions_queue.put(predictions)
+            except BaseException as e:
+                # Probably connection error. Wait a bit and try again.
+                self.logger.warning("Got exception in nextbus thread: %s" % e)
+                time.sleep(60)
+
+        self.logger.info("Exiting nextbus loop")
 
 # A displayed slide.
 class Slide(pi3d.ImageSprite):
@@ -660,6 +728,16 @@ class Slideshow(object):
         # List of (email_address, already_emailed) tuples.
         self.suggested_emails = []
 
+        self.nextbus_fetcher = NextbusFetcher() if NEXTBUS_AGENCY_TAG else None
+        if self.nextbus_fetcher:
+            self.nextbus_fetcher.start()
+        self.showing_bus = False
+        self.bus_predictions = None
+        self.bus_route_label = CachedString(shader, BUS_MAJOR_FONT, 0.05, "L")
+        self.bus_direction_label = CachedString(shader, BUS_MINOR_FONT, 0.05, "L")
+        self.bus_stop_label = CachedString(shader, BUS_MINOR_FONT, 0.05, "L")
+        self.bus_prediction_labels = [CachedString(shader, BUS_MINOR_FONT, 0.05, "L") for i in range(3)]
+
         self.time_label = CachedString(shader, TIME_FONT, 0.05, "R")
         self.track_label = CachedString(shader, TRACK_FONT, 0.05, "R")
         self.artist_label = CachedString(shader, ARTIST_FONT, 0.05, "R")
@@ -671,6 +749,8 @@ class Slideshow(object):
         self.slide_loader.stop()
         if self.sonos:
             self.sonos.stop()
+        if self.nextbus_fetcher:
+            self.nextbus_fetcher.stop()
 
     # Returns whether we took the key.
     def take_key(self, key):
@@ -775,12 +855,15 @@ class Slideshow(object):
             if slide is not current_slide and slide is not next_slide and not slide.is_broken:
                 slide.turn_off()
 
-        if self.debug:
-            self.draw_debug()
-
+        # Upper-left:
         if self.prompting_email:
             self.draw_email_prompt()
+        elif self.debug:
+            self.draw_debug()
+        elif self.showing_bus:
+            self.draw_bus()
 
+        # Upper-right:
         self.draw_time()
         self.draw_sonos()
 
@@ -906,6 +989,43 @@ class Slideshow(object):
                 string = self.station_labels[i].get(label, x, y)
                 string.draw()
                 y -= STATION_LEADING
+
+    def draw_bus(self):
+        x = -self.screen_width/2 + DISPLAY_MARGIN
+        y = self.screen_height/2 - DISPLAY_MARGIN
+
+        new_predictions = self.nextbus_fetcher.get_predictions()
+        if new_predictions:
+            self.bus_predictions = new_predictions
+
+        if self.bus_predictions and self.bus_predictions.predictions:
+            predictions = self.bus_predictions.predictions
+
+            string = self.bus_route_label.get(predictions[0].direction.route.title, x, y)
+            string.draw()
+            y -= BUS_MAJOR_LEADING
+
+            string = self.bus_direction_label.get(predictions[0].direction.title, x, y)
+            string.draw()
+            y -= BUS_MINOR_LEADING
+
+            string = self.bus_stop_label.get(self.bus_predictions.stop_title, x, y)
+            string.draw()
+            y -= BUS_MINOR_LEADING
+
+            for i in range(min(len(self.bus_prediction_labels), len(predictions))):
+                pred = predictions[i]
+                local_time = time.localtime(pred.epoch_time/1000)
+                time_label = time.strftime("%-I:%M%P", local_time)
+                rel_label = "arriving" if pred.minutes == 0 else "%d min" % pred.minutes
+                label = "%s (%s)" % (time_label, rel_label)
+                string = self.bus_prediction_labels[i].get(label, x, y)
+                string.draw()
+                y -= BUS_MINOR_LEADING
+        else:
+            string = self.bus_route_label.get(". . .", x, y)
+            string.draw()
+            y -= BUS_MAJOR_LEADING
 
     def rotate_clockwise(self):
         _, slide, _, _, _ = self.get_current_slide()
@@ -1047,6 +1167,15 @@ class Slideshow(object):
             # Auto-skip to the next one if we don't like this one.
             if rating == 1 or rating == 2:
                 self.jump_relative(1)
+
+    def toggle_bus(self):
+        self.set_show_bus(not self.showing_bus)
+
+    def set_show_bus(self, show_bus):
+        if self.nextbus_fetcher:
+            self.showing_bus = show_bus
+            self.bus_predictions = None
+            self.nextbus_fetcher.set_fetching(show_bus)
 
 # Must remove these in-place.
 def remove_unwanted_dirs(dirnames):
@@ -1297,6 +1426,8 @@ def main():
                     slideshow.stop_music()
                 elif key == ord("e"):
                     slideshow.prompt_email()
+                elif key == ord("b"):
+                    slideshow.toggle_bus()
                 elif key >= ord("1") and key <= ord("5"):
                     slideshow.rate_photo(key - ord("1") + 1)
                 elif key >= FIRST_FUNCTION_KEY and key < FIRST_FUNCTION_KEY + 10:

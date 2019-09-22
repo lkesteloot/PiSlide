@@ -14,6 +14,7 @@ for example in a kitchen. It has the following features:
 * If you have a Sonos music system on your network, it will show the current
   song and artist, and let you play a radio station with one key, stop the music,
   or toggle mute.
+* It can display the next three buses at a particular bus stop (from a NextBus feed).
 * It displays the time.
 
 # Using the software
@@ -41,6 +42,8 @@ for example in a kitchen. It has the following features:
   * The "S" key stops the music.
   * The "F1" to "F10" keys play the corresponding radio station in your Sonos
     radio station favorites list.
+* If you've set up NextBus information (agency and stop), type "B" to toggle
+  information about upcoming buses at that stop.
 
 # Configuring the software
 
