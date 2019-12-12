@@ -72,6 +72,7 @@ STAR_SCALE = 30
 # figure out why.  For all I know maybe the text is too far to the right.
 STAR_OFFSET = 10
 MAX_PAUSE_SECONDS = 5*60
+MAX_BUS_SECONDS = 60*60
 
 # The display time includes only one transition (the end one):
 SLIDE_DISPLAY_S = 5 if QUICK_SPEED else 14
@@ -298,6 +299,8 @@ class CachedString(object):
 
         return self.string
 
+# Fetches bus information in a different thread, keeping the
+# most recent data available for fetching and showing in the UI.
 class NextbusFetcher(object):
     def __init__(self):
         self.logger = logging.getLogger("nextbus")
@@ -313,11 +316,13 @@ class NextbusFetcher(object):
         # Predictions objects:
         self.predictions_queue = Queue.Queue()
 
+    # Start the thread. Does not start fetching.
     def start(self):
         self.thread = threading.Thread(target=self._loop)
         self.thread.daemon = True
         self.thread.start()
 
+    # Stop the thread.
     def stop(self):
         # I think this is thread-safe.
         self.running = False
@@ -327,6 +332,7 @@ class NextbusFetcher(object):
 
         if self.thread:
             self.thread.join()
+            self.thread = None
 
     # Set whether to periodically fetch predictions.
     def set_fetching(self, fetching):
@@ -732,6 +738,7 @@ class Slideshow(object):
         if self.nextbus_fetcher:
             self.nextbus_fetcher.start()
         self.showing_bus = False
+        self.bus_start_time = None
         self.bus_predictions = None
         self.bus_route_label = CachedString(shader, BUS_MAJOR_FONT, 0.05, "L")
         self.bus_direction_label = CachedString(shader, BUS_MINOR_FONT, 0.05, "L")
@@ -994,10 +1001,12 @@ class Slideshow(object):
         x = -self.screen_width/2 + DISPLAY_MARGIN
         y = self.screen_height/2 - DISPLAY_MARGIN
 
+        # Fetch the most recent prediction and cache it.
         new_predictions = self.nextbus_fetcher.get_predictions()
         if new_predictions:
             self.bus_predictions = new_predictions
 
+        # Show predictions if we got any.
         if self.bus_predictions and self.bus_predictions.predictions:
             predictions = self.bus_predictions.predictions
 
@@ -1022,7 +1031,8 @@ class Slideshow(object):
                 string = self.bus_prediction_labels[i].get(label, x, y)
                 string.draw()
                 y -= BUS_MINOR_LEADING
-        else:
+        elif self.bus_start_time is not None and time.time() - self.bus_start_time >= 0.5:
+            # Show something while waiting for the first prediction.
             string = self.bus_route_label.get(". . .", x, y)
             string.draw()
             y -= BUS_MAJOR_LEADING
@@ -1065,11 +1075,16 @@ class Slideshow(object):
         delta_time = now - self.previous_frame_time if self.previous_frame_time else 0
         self.previous_frame_time = now
 
-        # Advance time if not paused.
+        # Auto-disable paused after a while.
         if self.paused and self.pause_start_time is not None and time.time() - self.pause_start_time >= MAX_PAUSE_SECONDS:
-            self.paused = not self.paused
+            self.paused = False
             self.pause_start_time = None
 
+        # Auto-disable bus after a while.
+        if self.showing_bus and self.bus_start_time is not None and time.time() - self.bus_start_time >= MAX_BUS_SECONDS:
+            self.set_show_bus(False)
+
+        # Advance time if not paused.
         if not self.paused:
             self.time += delta_time
 
@@ -1174,6 +1189,10 @@ class Slideshow(object):
     def set_show_bus(self, show_bus):
         if self.nextbus_fetcher:
             self.showing_bus = show_bus
+            if self.showing_bus:
+                self.bus_start_time = time.time()
+            else:
+                self.bus_start_time = None
             self.bus_predictions = None
             self.nextbus_fetcher.set_fetching(show_bus)
 
