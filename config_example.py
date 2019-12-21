@@ -56,3 +56,9 @@ TWILIO_TOKEN = None             # The secret token string.
 TWILIO_SUBDIR = "twilio"        # Where to store images, relative to ROOT_DIR.
 TWILIO_MESSAGE = "Text photos to 415-555-5555"
 
+# Enable this for a party. It has the following effects:
+#
+#    Displays the TWILIO_MESSAGE instead of the image's label.
+#    Polls Twilio much more frequently.
+#
+PARTY_MODE = False

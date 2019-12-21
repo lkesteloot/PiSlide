@@ -57,7 +57,7 @@ TEXT_SHADOW_COLOR = (0, 0, 0)
 DATE_RE = re.compile(r"\d\d\d\d-\d\d-\d\d(.*)")
 TIME_RE = re.compile(r"\d\d\.\d\d\.\d\d(.*)")
 MAX_CACHE_SIZE = 4
-DEFAULT_DEBUG = False
+DEFAULT_SHOW_DEBUG = False
 DISPLAY_MARGIN = 50
 TIME_TOP_DISPLAY_MARGIN = 50
 TRACK_TOP_DISPLAY_MARGIN = 150
@@ -387,8 +387,8 @@ class TwilioFetcher(object):
         # Bool for whether fetching:
         self.command_queue = Queue.Queue()
 
-        # Each entry is a twilio.Image object:
-        self.image_queue = Queue.Queue()
+        # Each entry is a Photo object:
+        self.photo_queue = Queue.Queue()
 
     # Start the thread. Does not start fetching.
     def start(self):
@@ -412,10 +412,10 @@ class TwilioFetcher(object):
     def set_fetching(self, fetching):
         self.command_queue.put(fetching)
 
-    # Gets the most recent image, or None if there isn't one.
-    def get_image(self):
+    # Gets the most recent photo, or None if there isn't one.
+    def get_photo(self):
         try:
-            return self.image_queue.get_nowait()
+            return self.photo_queue.get_nowait()
         except Queue.Empty:
             return None
 
@@ -465,13 +465,17 @@ class TwilioFetcher(object):
         preprocess.process_file(ROOT_DIR, PROCESSED_ROOT_DIR, pathname)
 
         # Compute hash, add to database.
-        handle_new_and_renamed_file(self.con, pathname)
+        photo_id = handle_new_and_renamed_file(self.con, pathname)
 
-        self.image_queue.put(image)
+        # Fetch back from database and fix up pathname.
+        photo = self.con.get_photo_by_id(photo_id)
+        if photo:
+            photo.pathname = pathname
+            self.photo_queue.put(photo)
 
 # A displayed slide.
 class Slide(pi3d.ImageSprite):
-    def __init__(self, photo, texture, shader, star_sprite, swap_zoom, load_time, frame_count):
+    def __init__(self, photo, texture, shader, star_sprite, load_time, frame_count):
         super(Slide, self).__init__(texture, shader, w=1.0, h=1.0)
 
         self.photo = photo
@@ -496,8 +500,7 @@ class Slide(pi3d.ImageSprite):
         # For the zoom.
         self.start_zoom = 0.9
         self.end_zoom = 1.3 # Clip off a bit.
-        if swap_zoom:
-            self.start_zoom, self.end_zoom = self.end_zoom, self.start_zoom
+        self.swap_zoom = False
 
         # We've not moved yet, so our actuals are bogus.
         self.configured = False
@@ -580,7 +583,8 @@ class Slide(pi3d.ImageSprite):
             self.show_labels = time >= 0
         else:
             t = time/SLIDE_DISPLAY_S
-            ideal_zoom = interpolate(self.start_zoom, self.end_zoom, t)
+            ideal_zoom = interpolate(self.start_zoom, self.end_zoom,
+                    1 - t if self.swap_zoom else t)
 
             if time < 0:
                 ideal_alpha = clamp((time + SLIDE_TRANSITION_S)/SLIDE_TRANSITION_S, 0.0, 1.0)
@@ -635,24 +639,23 @@ class BrokenSlide(object):
 
 # A separate thread with an API for submitting slides to load asynchronously.
 class SlideLoader(object):
-    def __init__(self, shader, star_sprite, screen_width, screen_height, con):
+    def __init__(self, shader, star_sprite, screen_width, screen_height):
         self.shader = shader
         self.star_sprite = star_sprite
         self.screen_width = screen_width
         self.screen_height = screen_height
-        self.con = con
 
         self.thread = None
         self.running = True
 
-        # (photo, photo_index) tuples:
+        # Photo:
         self.request_queue = Queue.Queue()
 
-        # (photo_index, Slide) tuples:
+        # (Photo, Slide) tuples:
         self.reply_queue = Queue.Queue()
 
-        # Already requested photo indexes:
-        self.already_requested = set()
+        # Already requested photo IDs:
+        self.already_requested_ids = set()
 
     def start(self):
         self.thread = threading.Thread(target=self.loop)
@@ -664,48 +667,52 @@ class SlideLoader(object):
         self.running = False
 
         # Break out of loop().
-        self.request_slide(None, None)
+        self.request_slide(None)
 
         if self.thread:
             self.thread.join()
 
-    # Request that this slide be loaded. Calling this while this photo index
+    # Request that this slide be loaded. Calling this while this photo ID
     # is already in the queue is a no-op. Pass None for photo to kill
     # the thread.
-    def request_slide(self, photo, photo_index):
-        if photo_index not in self.already_requested:
-            self.already_requested.add(photo_index)
-            self.request_queue.put( (photo, photo_index) )
+    def request_slide(self, photo):
+        if photo:
+            if photo.id not in self.already_requested_ids:
+                self.already_requested_ids.add(photo.id)
+                self.request_queue.put(photo)
+        else:
+            # Kill thread.
+            self.request_queue.put(None)
 
-    # Generates (photo_index, slide) tuples. The slide may be None if the slide couldn't be loaded.
+    # Generates (photo, slide) tuples. The slide may be None if the slide couldn't be loaded.
     def get_loaded_slides(self):
         while True:
             try:
-                photo_index, slide = self.reply_queue.get_nowait()
-                self.already_requested.discard(photo_index)
-                yield photo_index, slide
+                photo, slide = self.reply_queue.get_nowait()
+                self.already_requested_ids.discard(photo.id)
+                yield photo, slide
             except Queue.Empty:
                 break
 
     # Runs in thread.
     def loop(self):
         while self.running:
-            photo, photo_index = self.request_queue.get()
+            photo = self.request_queue.get()
             if photo is None:
                 # End thread.
                 break
 
             slide = None
             try:
-                slide = self._load(photo, photo_index)
+                slide = self._load(photo)
             finally:
                 # Do this no matter what.
-                self.reply_queue.put( (photo_index, slide) )
+                self.reply_queue.put( (photo, slide) )
 
         LOGGER.info("Exiting SlideLoader loop")
 
     # Runs in thread.
-    def _load(self, photo, photo_index):
+    def _load(self, photo):
         global g_frame_count
 
         absolute_pathname = os.path.join(PROCESSED_ROOT_DIR, photo.pathname)
@@ -724,42 +731,38 @@ class SlideLoader(object):
             LOGGER.error("Got error reading file \"%s\": %s" % (absolute_pathname, e))
             return None
 
-        slide = Slide(photo, texture, self.shader, self.star_sprite,
-                photo_index % 2 == 0, load_time, frame_count)
+        slide = Slide(photo, texture, self.shader, self.star_sprite, load_time, frame_count)
         slide.compute_ideal_size(self.screen_width, self.screen_height)
 
         return slide
 
 # Given a list of photos, can retrieve a photo by index, caching a few of them.
 class SlideCache(object):
-    def __init__(self, photos, slide_loader):
-        self.photos = photos
+    def __init__(self, slide_loader):
         self.slide_loader = slide_loader
-        self.image_count = len(photos)
 
-        # From photo_index [0,image_count) to Slide object.
+        # From photo ID to Slide object.
         self.cache = {}
 
-    def get(self, photo_index):
+    # Return immediately with a Slide object if we've loaded this photo,
+    # or return None and optionally start loading the photo asynchronously.
+    def get(self, photo, fetch=True):
         # Before doing anything, see if the loader has anything for us.
         self._fill_cache()
 
-        photo_index %= self.image_count
-
-        slide = self.cache.get(photo_index)
-        if not slide:
+        slide = self.cache.get(photo.id)
+        if not slide and fetch:
             # Cap size of cache. Do this before we load the next slide.
             self._shrink_cache()
 
             # Load the photo.
-            photo = self.photos[photo_index]
-            self.slide_loader.request_slide(photo, photo_index)
+            self.slide_loader.request_slide(photo)
 
         return slide
 
     def _fill_cache(self):
         # Drain the return queue of the loader.
-        for photo_index, slide in self.slide_loader.get_loaded_slides():
+        for photo, slide in self.slide_loader.get_loaded_slides():
             # Make sure the cache has space.
             self._shrink_cache()
 
@@ -769,29 +772,30 @@ class SlideCache(object):
             if not slide:
                 slide = BrokenSlide()
 
-            self.cache[photo_index] = slide
+            self.cache[photo.id] = slide
 
             if slide.is_broken:
                 LOGGER.error("Couldn't load image")
             else:
                 LOGGER.debug("Reading image took %.1f seconds (%d frames)." % (slide.load_time, slide.frame_count))
 
+    # Leave at least one place in the cache.
     def _shrink_cache(self):
         while len(self.cache) >= MAX_CACHE_SIZE:
             self._purge_oldest()
 
     # Purge one slide that was used least recently.
     def _purge_oldest(self):
-        oldest_photo_index = None
+        oldest_photo = None
         oldest_time = None
 
-        for photo_index, slide in self.cache.items():
+        for photo, slide in self.cache.items():
             if oldest_time is None or slide.last_used < oldest_time:
-                oldest_photo_index = photo_index
+                oldest_photo = photo
                 oldest_time = slide.last_used
 
-        if oldest_photo_index is not None:
-            del self.cache[oldest_photo_index]
+        if oldest_photo is not None:
+            del self.cache[oldest_photo.id]
 
     def get_slides(self):
         return self.cache.values()
@@ -799,37 +803,28 @@ class SlideCache(object):
     def get_cache(self):
         return self.cache
 
-    # Inserts a photo before "index".
-    def insert_photo(self, index):
-        # This is tricky because our global index just goes on forever,
-        # it doesn't wrap at image count. We wrap ourselves just before
-        # look up, so the global index will be wrong if we change the number
-        # of images in our list.
-        adjustment = index
-        # TODO
-        photo_index %= self.image_count
-
 # Handles the display of the slideshow (current slide, transitions, and actions from the user).
 class Slideshow(object):
     def __init__(self, photos, display, shader, star_sprite, screen_size, con):
-        self.photo_index = 0
+        self.photos = photos
         self.display = display
         self.shader = shader
         self.screen_width = screen_size[0]
         self.screen_height = screen_size[1]
         self.con = con
 
-        self.slide_loader = SlideLoader(shader, star_sprite, self.screen_width, self.screen_height, con)
+        self.slide_loader = SlideLoader(shader, star_sprite, self.screen_width, self.screen_height)
         self.slide_loader.start()
 
-        self.slide_cache = SlideCache(photos, self.slide_loader)
+        self.slide_cache = SlideCache(self.slide_loader)
 
         self.sonos = sonos.SonosController() if ENABLE_SONOS else None
         if self.sonos:
             self.sonos.start()
         self.sonos_status = None
 
-        self.debug = DEFAULT_DEBUG
+        self.show_debug = DEFAULT_SHOW_DEBUG
+        # Photo ID to CachedString.
         self.debug_cache = {}
 
         self.paused = False
@@ -928,8 +923,13 @@ class Slideshow(object):
         else:
             return False
 
+    # Compute the current index based on the time.
     def get_current_photo_index(self):
         return int(math.floor(self.time/SLIDE_DISPLAY_S))
+
+    # Get the photo by its index, where index can go on indefinitely.
+    def photo_by_index(self, index):
+        return self.photos[index % len(self.photos)] if self.photos else None
 
     # Returns a tuple with these items:
     #
@@ -941,11 +941,15 @@ class Slideshow(object):
     #
     def get_current_slide(self):
         photo_index = self.get_current_photo_index()
-        current_slide = self.slide_cache.get(photo_index)
+        current_slide = self.slide_cache.get(self.photo_by_index(photo_index))
+        if current_slide:
+            current_slide.swap_zoom = photo_index % 2 == 0
         current_time_offset = self.time - photo_index*SLIDE_DISPLAY_S
 
         if current_time_offset >= SLIDE_DISPLAY_S - SLIDE_TRANSITION_S:
-            next_slide = self.slide_cache.get(photo_index + 1)
+            next_slide = self.slide_cache.get(self.photo_by_index(photo_index + 1))
+            if next_slide:
+                next_slide.swap_zoom = photo_index % 2 == 0
             next_time_offset = current_time_offset - SLIDE_DISPLAY_S
         else:
             next_slide = None
@@ -953,10 +957,11 @@ class Slideshow(object):
 
         return photo_index, current_slide, current_time_offset, next_slide, next_time_offset
 
+    # Prefetch the next n photos.
     def prefetch(self, n):
         photo_index = self.get_current_photo_index()
         for i in range(n):
-            slide = self.slide_cache.get(photo_index + i)
+            slide = self.slide_cache.get(self.photo_by_index(photo_index + i))
             if slide:
                 # Consider the prefetched slides touched because we always prefer them
                 # to the oldest slides.
@@ -991,7 +996,7 @@ class Slideshow(object):
         # Upper-left:
         if self.prompting_email:
             self.draw_email_prompt()
-        elif self.debug:
+        elif self.show_debug:
             self.draw_debug()
         elif self.showing_bus:
             self.draw_bus()
@@ -1001,26 +1006,26 @@ class Slideshow(object):
         self.draw_sonos()
 
     def draw_debug(self):
-        # List of (photo_index, slide) pairs.
-        cache = sorted(self.slide_cache.get_cache().items())
-
+        # Map from photo ID to Slide.
+        cache = self.slide_cache.get_cache()
         current_photo_index, _, _, _, _ = self.get_current_slide()
-
         unused_keys = set(self.debug_cache.keys())
 
         x = -self.screen_width/2 + DISPLAY_MARGIN
         y = self.screen_height/2 - DISPLAY_MARGIN
-        for photo_index, slide in cache:
+        for photo_index in range(current_photo_index - 5, current_photo_index + 5):
+            photo = self.photo_by_index(photo_index)
+            slide = self.slide_cache.get(photo, False)
             text = "%d: %s" % (photo_index, slide)
-            if photo_index == current_photo_index % self.slide_cache.image_count:
+            if photo_index == current_photo_index:
                 text += " (current)"
 
-            label = self.debug_cache.get(photo_index)
+            label = self.debug_cache.get(photo.id)
             if label:
-                unused_keys.discard(photo_index)
+                unused_keys.discard(photo.id)
             else:
                 label = CachedString(self.shader, TEXT_FONT, 0.05, "L")
-                self.debug_cache[photo_index] = label
+                self.debug_cache[photo.id] = label
 
             string = label.get(text, x, y)
             string.draw()
@@ -1028,8 +1033,8 @@ class Slideshow(object):
             y -= 60
 
         # Purge cache of unused items.
-        for photo_index in unused_keys:
-            del self.debug_cache[photo_index]
+        for photo_id in unused_keys:
+            del self.debug_cache[photo_id]
 
     def draw_email_prompt(self):
         x = -self.screen_width/2 + DISPLAY_MARGIN
@@ -1167,16 +1172,33 @@ class Slideshow(object):
     # and show them next.
     def fetch_twilio_photos(self):
         if self.twilio_fetcher:
-            image = self.twilio_fetcher.get_image()
-            if image:
-                pathname = image.pathname
+            photo = self.twilio_fetcher.get_photo()
+            if photo:
+                # Get global photo index. This number goes on forever, not wrapping.
+                photo_index = self.get_current_photo_index()
 
-                self.slide_cache.insert_photo(photo_index + 1)
+                if self.photos:
+                    # We want that "photo_index + 1" have this new photo. Since we
+                    # wrap all index numbers by the photo count and the photo count
+                    # is about to go up by one, we must adjust our concept of time
+                    # to pretend there's been this many photos all along.
+                    wrapped_photo_index = photo_index % len(self.photos)
 
-                # TODO: Add photo to db_photos, with correct pathname.
+                    # The number of virtual photos that were inserted in the past.
+                    insert_count = photo_index / len(self.photos)
 
-                # Find a pathname for each photo.
-                db_photos = assign_photo_pathname(con, db_photos, tree_pathnames)
+                    # Adjust the time by this number of virtual photos.
+                    self.time += insert_count*SLIDE_DISPLAY_S
+
+                    # Insert into our array.
+                    self.photos.insert(wrapped_photo_index + 1, photo)
+
+                    # Prefetch it.
+                    self.prefetch(1)
+                else:
+                    # First photo, just add it.
+                    self.photos.append(photo)
+                    self.time = 0
 
     def rotate_clockwise(self):
         _, slide, _, _, _ = self.get_current_slide()
@@ -1201,7 +1223,7 @@ class Slideshow(object):
             self.time = 0
 
     def toggle_debug(self):
-        self.debug = not self.debug
+        self.show_debug = not self.show_debug
 
     def toggle_pause(self):
         self.paused = not self.paused
@@ -1417,6 +1439,8 @@ def handle_new_and_renamed_files(con, tree_pathnames, db_photo_files):
     for pathname in pathnames_to_do:
         handle_new_and_renamed_file(con, pathname)
 
+# Create a new photo file for this pathname, and optionally a new photo.
+# Returns the photo ID (new or old).
 def handle_new_and_renamed_file(con, pathname):
     print "    Computing hash for " + pathname
     label = clean_pathname(pathname)
@@ -1448,6 +1472,9 @@ def handle_new_and_renamed_file(con, pathname):
         # Leave the timestamp the same, but update the label.
         photo.label = label
         db.save_photo(con, photo)
+        photo_id = photo.id
+
+    return photo_id
 
 # Return the file's rotation in degrees, or None if it cannot be determined.
 def get_file_rotation(absolute_pathname):

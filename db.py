@@ -127,6 +127,10 @@ def row_to_photo(row):
 def get_all_photos(con):
     return [row_to_photo(row) for row in con.execute("SELECT " + PHOTO_FIELDS + " FROM photo")]
 
+def get_photo_by_id(con, photo_id):
+    row = query_single_row(con, "SELECT " + PHOTO_FIELDS + " FROM photo WHERE id = ?", (photo_id,))
+    return row_to_photo(row)
+
 def get_photo_by_hash_back(con, hash_back):
     row = query_single_row(con, "SELECT " + PHOTO_FIELDS + " FROM photo WHERE hash_back = ?", (hash_back,))
     return row_to_photo(row)
