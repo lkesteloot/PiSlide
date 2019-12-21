@@ -40,6 +40,8 @@ if ENABLE_SONOS:
     import sonos
 if NEXTBUS_AGENCY_TAG:
     import nextbus
+if TWILIO_SID:
+    import twilio
 
 # These are for debugging, should normally be False:
 QUICK_SPEED = False
@@ -364,6 +366,80 @@ class NextbusFetcher(object):
                 time.sleep(60)
 
         self.logger.info("Exiting nextbus loop")
+
+# Fetches photos from Twilio in a different thread, keeping the
+# list of fetched images available for fetching and showing in the UI.
+class TwilioFetcher(object):
+    def __init__(self):
+        self.logger = logging.getLogger("twilio")
+        self.logger.setLevel(logging.DEBUG)
+
+        self.twilio_path = os.join(ROOT_DIR, TWILIO_SUBDIR)
+        os.makedirs(self.twilio_path)
+
+        self.fetching = False
+        self.thread = None
+        self.running = True
+
+        # Bool for whether fetching:
+        self.command_queue = Queue.Queue()
+
+        # Each entry is a twilio.Image object:
+        self.image_queue = Queue.Queue()
+
+    # Start the thread. Does not start fetching.
+    def start(self):
+        self.thread = threading.Thread(target=self._loop)
+        self.thread.daemon = True
+        self.thread.start()
+
+    # Stop the thread.
+    def stop(self):
+        # I think this is thread-safe.
+        self.running = False
+
+        # Exit the get().
+        self.set_fetching(False)
+
+        if self.thread:
+            self.thread.join()
+            self.thread = None
+
+    # Set whether to periodically fetch images.
+    def set_fetching(self, fetching):
+        self.command_queue.put(fetching)
+
+    # Gets the most recent image, or None if there isn't one.
+    def get_image(self):
+        try:
+            return self.image_queue.get_nowait()
+        except Queue.Empty:
+            return None
+
+    # Runs in the other thread.
+    def _loop(self):
+        while self.running:
+            try:
+                try:
+                    self.fetching = self.command_queue.get(True, twilio.FETCH_PERIOD_S)
+                except Queue.Empty:
+                    # No problem, ignore.
+                    pass
+
+                if self.fetching:
+                    results = twilio.download_images(self.twilio_path, True, self.logger)
+                    if results:
+                        for image in results.images:
+                            self.image_queue.put(image)
+                    else:
+                        # Don't spam API.
+                        time.sleep(60)
+            except BaseException as e:
+                # Probably connection error. Wait a bit and try again.
+                self.logger.warning("Got exception in twilio thread: %s" % e)
+                time.sleep(60)
+
+        self.logger.info("Exiting twilio loop")
 
 # A displayed slide.
 class Slide(pi3d.ImageSprite):
@@ -734,6 +810,7 @@ class Slideshow(object):
         # List of (email_address, already_emailed) tuples.
         self.suggested_emails = []
 
+        # Thread to fetch NextBus information.
         self.nextbus_fetcher = NextbusFetcher() if NEXTBUS_AGENCY_TAG else None
         if self.nextbus_fetcher:
             self.nextbus_fetcher.start()
@@ -745,6 +822,12 @@ class Slideshow(object):
         self.bus_stop_label = CachedString(shader, BUS_MINOR_FONT, 0.05, "L")
         self.bus_prediction_labels = [CachedString(shader, BUS_MINOR_FONT, 0.05, "L") for i in range(3)]
 
+        # Thread to fetch Twilio photos.
+        self.twilio_fetcher = TwilioFetcher() if TWILIO_SID else None
+        if self.twilio_fetcher:
+            self.twilio_fetcher.start()
+
+        # Labels to show onscreen.
         self.time_label = CachedString(shader, TIME_FONT, 0.05, "R")
         self.track_label = CachedString(shader, TRACK_FONT, 0.05, "R")
         self.artist_label = CachedString(shader, ARTIST_FONT, 0.05, "R")

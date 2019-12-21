@@ -49,3 +49,9 @@ BAD_FILE_PREFIXES = ["DSC_", "PICT", "100_", "IMG_", "P101", "VIP_", "Image",
 NEXTBUS_AGENCY_TAG = None    # E.g., "sf-muni"
 NEXTBUS_STOP_ID = None
 
+# Fill this in if you want to be able to send photos to the slideshow program
+# using text messages. Requires a Twilio account and phone number.
+TWILIO_SID = None               # E.g., "ECbf..."
+TWILIO_TOKEN = None             # The token string.
+TWILIO_SUBDIR = "twilio"        # Below ROOT_DIR.
+
