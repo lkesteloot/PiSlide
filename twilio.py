@@ -10,7 +10,10 @@ import os
 import config
 
 # How often, in seconds, to fetch messages.
-FETCH_PERIOD_S = 1
+if PARTY_MODE:
+    FETCH_PERIOD_S = 1
+else:
+    FETCH_PERIOD_S = 60
 
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"
 AUTHORIZATION = "Basic " + base64.b64encode(config.TWILIO_SID + ":" + config.TWILIO_TOKEN)

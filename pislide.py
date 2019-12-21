@@ -75,6 +75,7 @@ STAR_SCALE = 30
 STAR_OFFSET = 10
 MAX_PAUSE_SECONDS = 5*60
 MAX_BUS_SECONDS = 60*60
+MAX_TWILIO_SECONDS = 8*60*60
 
 # The display time includes only one transition (the end one):
 SLIDE_DISPLAY_S = 5 if QUICK_SPEED else 14
@@ -370,7 +371,9 @@ class NextbusFetcher(object):
 # Fetches photos from Twilio in a different thread, keeping the
 # list of fetched images available for fetching and showing in the UI.
 class TwilioFetcher(object):
-    def __init__(self):
+    def __init__(self, con):
+        self.con = con
+
         self.logger = logging.getLogger("twilio")
         self.logger.setLevel(logging.DEBUG)
 
@@ -430,7 +433,7 @@ class TwilioFetcher(object):
                     results = twilio.download_images(self.twilio_path, True, self.logger)
                     if results:
                         for image in results.images:
-                            self.image_queue.put(image)
+                            self._process_image(image)
                     else:
                         # Don't spam API.
                         time.sleep(60)
@@ -440,6 +443,31 @@ class TwilioFetcher(object):
                 time.sleep(60)
 
         self.logger.info("Exiting twilio loop")
+
+    # Resize the downloaded image.
+    def _process_image(self, image):
+        pathname = image.pathname
+        self.logger.info("Received Twilio image from %s: %s (%s)" %
+                (image.phone_number, pathname, image.content_type))
+
+        if image.content_type != "image/jpeg":
+            self.logger.warn("Can't handle image type " + image.content_type)
+            return
+
+        if not pathname.startswith(ROOT_DIR):
+            self.logger.warn("Image %s is not under %s" % (pathname, ROOT_DIR))
+            return
+
+        # Find path relative to root.
+        pathname = pathname[len(ROOT_DIR):].lstrip("/")
+
+        # Resize image, since we're already in a worker thread.
+        preprocess.process_file(ROOT_DIR, PROCESSED_ROOT_DIR, pathname)
+
+        # Compute hash, add to database.
+        handle_new_and_renamed_file(self.con, pathname)
+
+        self.image_queue.put(image)
 
 # A displayed slide.
 class Slide(pi3d.ImageSprite):
@@ -477,7 +505,8 @@ class Slide(pi3d.ImageSprite):
         # When we were last used (drawn, moved, requested).
         self.last_used = 0
 
-        self.name_label = pi3d.String(font=TEXT_FONT, string=self.photo.label,
+        label = TWILIO_MESSAGE if PARTY_MODE and TWILIO_SID else self.photo.label
+        self.name_label = pi3d.String(font=TEXT_FONT, string=label,
                 is_3d=False, x=0, y=-360, z=0.05)
         self.name_label.set_shader(shader)
 
@@ -770,6 +799,16 @@ class SlideCache(object):
     def get_cache(self):
         return self.cache
 
+    # Inserts a photo before "index".
+    def insert_photo(self, index):
+        # This is tricky because our global index just goes on forever,
+        # it doesn't wrap at image count. We wrap ourselves just before
+        # look up, so the global index will be wrong if we change the number
+        # of images in our list.
+        adjustment = index
+        # TODO
+        photo_index %= self.image_count
+
 # Handles the display of the slideshow (current slide, transitions, and actions from the user).
 class Slideshow(object):
     def __init__(self, photos, display, shader, star_sprite, screen_size, con):
@@ -823,9 +862,11 @@ class Slideshow(object):
         self.bus_prediction_labels = [CachedString(shader, BUS_MINOR_FONT, 0.05, "L") for i in range(3)]
 
         # Thread to fetch Twilio photos.
-        self.twilio_fetcher = TwilioFetcher() if TWILIO_SID else None
+        self.twilio_fetcher = TwilioFetcher(self.con) if TWILIO_SID else None
         if self.twilio_fetcher:
             self.twilio_fetcher.start()
+        self.fetching_twilio = False
+        self.twilio_start_time = None
 
         # Labels to show onscreen.
         self.time_label = CachedString(shader, TIME_FONT, 0.05, "R")
@@ -841,6 +882,8 @@ class Slideshow(object):
             self.sonos.stop()
         if self.nextbus_fetcher:
             self.nextbus_fetcher.stop()
+        if self.twilio_fetcher:
+            self.twilio_fetcher.stop()
 
     # Returns whether we took the key.
     def take_key(self, key):
@@ -1120,6 +1163,21 @@ class Slideshow(object):
             string.draw()
             y -= BUS_MAJOR_LEADING
 
+    # See if any images came in from the Twilio thread. If so, process them
+    # and show them next.
+    def fetch_twilio_photos(self):
+        if self.twilio_fetcher:
+            image = self.twilio_fetcher.get_image()
+            if image:
+                pathname = image.pathname
+
+                self.slide_cache.insert_photo(photo_index + 1)
+
+                # TODO: Add photo to db_photos, with correct pathname.
+
+                # Find a pathname for each photo.
+                db_photos = assign_photo_pathname(con, db_photos, tree_pathnames)
+
     def rotate_clockwise(self):
         _, slide, _, _, _ = self.get_current_slide()
         if slide and not slide.is_broken:
@@ -1166,6 +1224,10 @@ class Slideshow(object):
         # Auto-disable bus after a while.
         if self.showing_bus and self.bus_start_time is not None and time.time() - self.bus_start_time >= MAX_BUS_SECONDS:
             self.set_show_bus(False)
+
+        # Auto-disable Twilio after a while.
+        if self.fetching_twilio and self.twilio_start_time is not None and time.time() - self.twilio_start_time >= MAX_TWILIO_SECONDS:
+            self.set_fetch_twilio(False)
 
         # Advance time if not paused.
         if not self.paused:
@@ -1279,6 +1341,18 @@ class Slideshow(object):
             self.bus_predictions = None
             self.nextbus_fetcher.set_fetching(show_bus)
 
+    def toggle_twilio(self):
+        self.set_fetch_twilio(not self.fetching_twilio)
+
+    def set_fetch_twilio(self, fetch_twilio):
+        if self.twilio_fetcher:
+            self.fetching_twilio = fetch_twilio
+            if self.fetching_twilio:
+                self.twilio_start_time = time.time()
+            else:
+                self.twilio_start_time = None
+            self.twilio_fetcher.set_fetching(fetch_twilio)
+
 # Must remove these in-place.
 def remove_unwanted_dirs(dirnames):
     for dirname in UNWANTED_DIRS:
@@ -1341,36 +1415,39 @@ def handle_new_and_renamed_files(con, tree_pathnames, db_photo_files):
 
     print "Analyzing %d new or renamed photos..." % len(pathnames_to_do)
     for pathname in pathnames_to_do:
-        print "    Computing hash for " + pathname
-        label = clean_pathname(pathname)
+        handle_new_and_renamed_file(con, pathname)
 
-        # We want the hashes of the original files, not the processed ones.
-        absolute_pathname = os.path.join(ROOT_DIR, pathname)
+def handle_new_and_renamed_file(con, pathname):
+    print "    Computing hash for " + pathname
+    label = clean_pathname(pathname)
 
-        image_bytes = open(absolute_pathname).read()
-        hash_all = sha.sha(image_bytes).hexdigest()
-        hash_back = sha.sha(image_bytes[-1024:]).hexdigest()
+    # We want the hashes of the original files, not the processed ones.
+    absolute_pathname = os.path.join(ROOT_DIR, pathname)
 
-        # Create a new photo file.
-        photo_file = PhotoFile(pathname, hash_all, hash_back)
-        db.save_photo_file(con, photo_file)
+    image_bytes = open(absolute_pathname).read()
+    hash_all = sha.sha(image_bytes).hexdigest()
+    hash_back = sha.sha(image_bytes[-1024:]).hexdigest()
 
-        # Now see if this was a renaming of another file.
-        photo = db.get_photo_by_hash_back(con, hash_back)
-        if not photo:
-            # New photo.
-            print "        New photo."
-            rotation = get_file_rotation(absolute_pathname) or 0
-            rating = 3
-            mtime = os.path.getmtime(absolute_pathname)
-            display_date = mtime_to_string(mtime)
-            photo_id = db.create_photo(con, hash_back, rotation, rating, mtime, display_date, label)
-        else:
-            # Renamed or moved photo.
-            print "        Renamed or moved photo."
-            # Leave the timestamp the same, but update the label.
-            photo.label = label
-            db.save_photo(con, photo)
+    # Create a new photo file.
+    photo_file = PhotoFile(pathname, hash_all, hash_back)
+    db.save_photo_file(con, photo_file)
+
+    # Now see if this was a renaming of another file.
+    photo = db.get_photo_by_hash_back(con, hash_back)
+    if not photo:
+        # New photo.
+        print "        New photo."
+        rotation = get_file_rotation(absolute_pathname) or 0
+        rating = 3
+        mtime = os.path.getmtime(absolute_pathname)
+        display_date = mtime_to_string(mtime)
+        photo_id = db.create_photo(con, hash_back, rotation, rating, mtime, display_date, label)
+    else:
+        # Renamed or moved photo.
+        print "        Renamed or moved photo."
+        # Leave the timestamp the same, but update the label.
+        photo.label = label
+        db.save_photo(con, photo)
 
 # Return the file's rotation in degrees, or None if it cannot be determined.
 def get_file_rotation(absolute_pathname):
@@ -1499,6 +1576,7 @@ def main():
     while display.loop_running():
         slideshow.prefetch(MAX_CACHE_SIZE/2 + 1)
         slideshow.move()
+        slideshow.fetch_twilio_photos()
         slideshow.draw()
         g_frame_count += 1
 
@@ -1530,6 +1608,8 @@ def main():
                     slideshow.prompt_email()
                 elif key == ord("b"):
                     slideshow.toggle_bus()
+                elif key == ord("T"):
+                    slideshow.toggle_twilio()
                 elif key >= ord("1") and key <= ord("5"):
                     slideshow.rate_photo(key - ord("1") + 1)
                 elif key >= FIRST_FUNCTION_KEY and key < FIRST_FUNCTION_KEY + 10:

@@ -52,6 +52,7 @@ NEXTBUS_STOP_ID = None
 # Fill this in if you want to be able to send photos to the slideshow program
 # using text messages. Requires a Twilio account and phone number.
 TWILIO_SID = None               # E.g., "ECbf..."
-TWILIO_TOKEN = None             # The token string.
-TWILIO_SUBDIR = "twilio"        # Below ROOT_DIR.
+TWILIO_TOKEN = None             # The secret token string.
+TWILIO_SUBDIR = "twilio"        # Where to store images, relative to ROOT_DIR.
+TWILIO_MESSAGE = "Text photos to 415-555-5555"
 

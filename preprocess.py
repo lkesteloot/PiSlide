@@ -25,7 +25,19 @@ MAX_HEIGHT = 1920
 WIDTHS = [4, 8, 16, 32, 48, 64, 72, 96, 128, 144, 192, 256,
         288, 384, 512, 576, 640, 720, 768, 800, 960, 1024, 1080, 1920]
 
-def process_file(src_absolute_pathname, dst_absolute_pathname):
+# Process file from src_root into dst_root. The pathname is relative to both.
+def process_file(src_root, dst_root, pathname):
+    # Absolute pathnames.
+    src_absolute_pathname = os.path.join(src_root, pathname)
+    dst_absolute_pathname = os.path.join(dst_root, pathname)
+
+    # Compute destination directory.
+    dst_dir = os.path.split(dst_absolute_pathname)[0]
+
+    # Create it if necessary.
+    if not os.path.exists(dst_dir):
+        os.makedirs(dst_dir)
+
     # Get date of file source.
     mtime = os.path.getmtime(src_absolute_pathname)
 
@@ -77,22 +89,10 @@ def process_file(src_absolute_pathname, dst_absolute_pathname):
 # Process files from src_root into dst_root. Only process files specified
 # by the (relative) pathnames.
 def process_trees(src_root, dst_root, pathnames):
-    print "Preprocessing trees..."
+    print "Preprocessing trees with %d files..." % len(pathnames)
 
     for file_count, pathname in enumerate(pathnames):
-        # Absolute pathnames.
-        src_absolute_pathname = os.path.join(src_root, pathname)
-        dst_absolute_pathname = os.path.join(dst_root, pathname)
-
-        # Compute destination directory.
-        dst_dir = os.path.split(dst_absolute_pathname)[0]
-
-        # Create it if necessary.
-        if not os.path.exists(dst_dir):
-            os.makedirs(dst_dir)
-
-        # Process the file.
-        process_file(src_absolute_pathname, dst_absolute_pathname)
+        process_file(src_root, dst_root, pathname)
 
         if (file_count + 1) % 10000 == 0:
             print "    Analyzed %d files" % (file_count + 1,)
