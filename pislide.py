@@ -492,7 +492,7 @@ class Slide(pi3d.ImageSprite):
         # For the zoom.
         self.start_zoom = 0.9
         self.end_zoom = 1.3 # Clip off a bit.
-        self.swap_zoom = False
+        self.swap_zoom = None # None means "False" but also "Not yet set".
 
         # We've not moved yet, so our actuals are bogus.
         self.configured = False
@@ -939,13 +939,13 @@ class Slideshow(object):
             return photo_index, None, 0.0, None, 0.0
 
         current_slide = self.slide_cache.get(self.photo_by_index(photo_index))
-        if current_slide:
+        if current_slide and current_slide.swap_zoom is None:
             current_slide.swap_zoom = photo_index % 2 == 0
         current_time_offset = self.time - photo_index*SLIDE_DISPLAY_S
 
         if current_time_offset >= SLIDE_DISPLAY_S - SLIDE_TRANSITION_S:
             next_slide = self.slide_cache.get(self.photo_by_index(photo_index + 1))
-            if next_slide:
+            if next_slide and next_slide.swap_zoom is None:
                 next_slide.swap_zoom = (photo_index + 1) % 2 == 0
             next_time_offset = current_time_offset - SLIDE_DISPLAY_S
         else:

@@ -124,7 +124,7 @@ def download_images(image_path, delete, logger):
 
     for message in messages["messages"]:
         source_phone_number = message["from"]
-        logger.info("Fetching message from %s" % source_phone_number)
+        # logger.info("Fetching message from %s" % source_phone_number)
         direction = message["direction"]
         num_media = int(message["num_media"])
         if direction == "inbound" and num_media > 0:
