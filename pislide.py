@@ -34,13 +34,13 @@ import db
 import email_service
 from model import Photo, PhotoFile, Email
 import preprocess
-from config import ROOT_DIR, PROCESSED_ROOT_DIR, EMAIL_FROM, UNWANTED_DIRS, BAD_PARTS, \
-        BAD_FILE_PREFIXES, ENABLE_SONOS, NEXTBUS_AGENCY_TAG, NEXTBUS_STOP_ID
-if ENABLE_SONOS:
+import config
+
+if config.ENABLE_SONOS:
     import sonos
-if NEXTBUS_AGENCY_TAG:
+if config.NEXTBUS_AGENCY_TAG:
     import nextbus
-if TWILIO_SID:
+if config.TWILIO_SID:
     import twilio
 
 # These are for debugging, should normally be False:
@@ -208,12 +208,12 @@ def keep_part(part):
         return False
 
     # Bad prefix?
-    for prefix in BAD_FILE_PREFIXES:
+    for prefix in config.BAD_FILE_PREFIXES:
         if part.startswith(prefix):
             return False
 
     # Bad altogether?
-    if part in BAD_PARTS:
+    if part in config.BAD_PARTS:
         return False
 
     # All numbers (and not a year)?
@@ -359,7 +359,7 @@ class NextbusFetcher(object):
                     pass
 
                 if self.fetching:
-                    predictions = nextbus.get_predictions_for_stop(NEXTBUS_AGENCY_TAG, NEXTBUS_STOP_ID)
+                    predictions = nextbus.get_predictions_for_stop(config.NEXTBUS_AGENCY_TAG, config.NEXTBUS_STOP_ID)
                     self.predictions_queue.put(predictions)
             except BaseException as e:
                 # Probably connection error. Wait a bit and try again.
@@ -371,14 +371,13 @@ class NextbusFetcher(object):
 # Fetches photos from Twilio in a different thread, keeping the
 # list of fetched images available for fetching and showing in the UI.
 class TwilioFetcher(object):
-    def __init__(self, con):
-        self.con = con
-
+    def __init__(self):
         self.logger = logging.getLogger("twilio")
         self.logger.setLevel(logging.DEBUG)
 
-        self.twilio_path = os.join(ROOT_DIR, TWILIO_SUBDIR)
-        os.makedirs(self.twilio_path)
+        self.twilio_path = os.path.join(config.ROOT_DIR, config.TWILIO_SUBDIR)
+        if not os.path.exists(self.twilio_path):
+            os.makedirs(self.twilio_path)
 
         self.fetching = False
         self.thread = None
@@ -387,8 +386,8 @@ class TwilioFetcher(object):
         # Bool for whether fetching:
         self.command_queue = Queue.Queue()
 
-        # Each entry is a Photo object:
-        self.photo_queue = Queue.Queue()
+        # Each entry is a pathname to a newly-downloaded and resized photo:
+        self.photo_pathname_queue = Queue.Queue()
 
     # Start the thread. Does not start fetching.
     def start(self):
@@ -412,10 +411,10 @@ class TwilioFetcher(object):
     def set_fetching(self, fetching):
         self.command_queue.put(fetching)
 
-    # Gets the most recent photo, or None if there isn't one.
-    def get_photo(self):
+    # Gets the most recent photo pathname, or None if there isn't one.
+    def get_photo_pathname(self):
         try:
-            return self.photo_queue.get_nowait()
+            return self.photo_pathname_queue.get_nowait()
         except Queue.Empty:
             return None
 
@@ -454,24 +453,17 @@ class TwilioFetcher(object):
             self.logger.warn("Can't handle image type " + image.content_type)
             return
 
-        if not pathname.startswith(ROOT_DIR):
-            self.logger.warn("Image %s is not under %s" % (pathname, ROOT_DIR))
+        if not pathname.startswith(config.ROOT_DIR):
+            self.logger.warn("Image %s is not under %s" % (pathname, config.ROOT_DIR))
             return
 
         # Find path relative to root.
-        pathname = pathname[len(ROOT_DIR):].lstrip("/")
+        pathname = pathname[len(config.ROOT_DIR):].lstrip("/")
 
         # Resize image, since we're already in a worker thread.
-        preprocess.process_file(ROOT_DIR, PROCESSED_ROOT_DIR, pathname)
+        preprocess.process_file(config.ROOT_DIR, config.PROCESSED_ROOT_DIR, pathname)
 
-        # Compute hash, add to database.
-        photo_id = handle_new_and_renamed_file(self.con, pathname)
-
-        # Fetch back from database and fix up pathname.
-        photo = self.con.get_photo_by_id(photo_id)
-        if photo:
-            photo.pathname = pathname
-            self.photo_queue.put(photo)
+        self.photo_pathname_queue.put(pathname)
 
 # A displayed slide.
 class Slide(pi3d.ImageSprite):
@@ -508,12 +500,14 @@ class Slide(pi3d.ImageSprite):
         # When we were last used (drawn, moved, requested).
         self.last_used = 0
 
-        label = TWILIO_MESSAGE if PARTY_MODE and TWILIO_SID else self.photo.label
+        show_twilio_instructions = config.PARTY_MODE and config.TWILIO_SID
+        label = config.TWILIO_MESSAGE if show_twilio_instructions else self.photo.label
         self.name_label = pi3d.String(font=TEXT_FONT, string=label,
                 is_3d=False, x=0, y=-360, z=0.05)
         self.name_label.set_shader(shader)
 
-        self.date_label = pi3d.String(font=DATE_FONT, string=self.photo.display_date,
+        display_date = "" if show_twilio_instructions else self.photo.display_date
+        self.date_label = pi3d.String(font=DATE_FONT, string=display_date,
                 is_3d=False, x=0, y=-420, z=0.05)
         self.date_label.set_shader(shader)
 
@@ -715,7 +709,7 @@ class SlideLoader(object):
     def _load(self, photo):
         global g_frame_count
 
-        absolute_pathname = os.path.join(PROCESSED_ROOT_DIR, photo.pathname)
+        absolute_pathname = os.path.join(config.PROCESSED_ROOT_DIR, photo.pathname)
         LOGGER.info("Loading %s" % (absolute_pathname,))
 
         # Load the image.
@@ -786,16 +780,16 @@ class SlideCache(object):
 
     # Purge one slide that was used least recently.
     def _purge_oldest(self):
-        oldest_photo = None
+        oldest_photo_id = None
         oldest_time = None
 
-        for photo, slide in self.cache.items():
+        for photo_id, slide in self.cache.items():
             if oldest_time is None or slide.last_used < oldest_time:
-                oldest_photo = photo
+                oldest_photo_id = photo_id
                 oldest_time = slide.last_used
 
-        if oldest_photo is not None:
-            del self.cache[oldest_photo.id]
+        if oldest_photo_id is not None:
+            del self.cache[oldest_photo_id]
 
     def get_slides(self):
         return self.cache.values()
@@ -818,7 +812,7 @@ class Slideshow(object):
 
         self.slide_cache = SlideCache(self.slide_loader)
 
-        self.sonos = sonos.SonosController() if ENABLE_SONOS else None
+        self.sonos = sonos.SonosController() if config.ENABLE_SONOS else None
         if self.sonos:
             self.sonos.start()
         self.sonos_status = None
@@ -845,7 +839,7 @@ class Slideshow(object):
         self.suggested_emails = []
 
         # Thread to fetch NextBus information.
-        self.nextbus_fetcher = NextbusFetcher() if NEXTBUS_AGENCY_TAG else None
+        self.nextbus_fetcher = NextbusFetcher() if config.NEXTBUS_AGENCY_TAG else None
         if self.nextbus_fetcher:
             self.nextbus_fetcher.start()
         self.showing_bus = False
@@ -857,7 +851,7 @@ class Slideshow(object):
         self.bus_prediction_labels = [CachedString(shader, BUS_MINOR_FONT, 0.05, "L") for i in range(3)]
 
         # Thread to fetch Twilio photos.
-        self.twilio_fetcher = TwilioFetcher(self.con) if TWILIO_SID else None
+        self.twilio_fetcher = TwilioFetcher() if config.TWILIO_SID else None
         if self.twilio_fetcher:
             self.twilio_fetcher.start()
         self.fetching_twilio = False
@@ -915,7 +909,7 @@ class Slideshow(object):
                 if index < len(self.suggested_emails):
                     self.complete_email(index)
             elif key == FIRST_FUNCTION_KEY + 12 - 1:
-                self.email_from = (self.email_from + 1) % len(EMAIL_FROM)
+                self.email_from = (self.email_from + 1) % len(config.EMAIL_FROM)
             else:
                 # Ignore key.
                 LOGGER.info("Unknown key during email entry: " + str(key))
@@ -941,6 +935,9 @@ class Slideshow(object):
     #
     def get_current_slide(self):
         photo_index = self.get_current_photo_index()
+        if not self.photos:
+            return photo_index, None, 0.0, None, 0.0
+
         current_slide = self.slide_cache.get(self.photo_by_index(photo_index))
         if current_slide:
             current_slide.swap_zoom = photo_index % 2 == 0
@@ -949,7 +946,7 @@ class Slideshow(object):
         if current_time_offset >= SLIDE_DISPLAY_S - SLIDE_TRANSITION_S:
             next_slide = self.slide_cache.get(self.photo_by_index(photo_index + 1))
             if next_slide:
-                next_slide.swap_zoom = photo_index % 2 == 0
+                next_slide.swap_zoom = (photo_index + 1) % 2 == 0
             next_time_offset = current_time_offset - SLIDE_DISPLAY_S
         else:
             next_slide = None
@@ -959,6 +956,9 @@ class Slideshow(object):
 
     # Prefetch the next n photos.
     def prefetch(self, n):
+        if not self.photos:
+            return
+
         photo_index = self.get_current_photo_index()
         for i in range(n):
             slide = self.slide_cache.get(self.photo_by_index(photo_index + i))
@@ -1015,6 +1015,8 @@ class Slideshow(object):
         y = self.screen_height/2 - DISPLAY_MARGIN
         for photo_index in range(current_photo_index - 5, current_photo_index + 5):
             photo = self.photo_by_index(photo_index)
+            if not photo:
+                continue
             slide = self.slide_cache.get(photo, False)
             text = "%d: %s" % (photo_index, slide)
             if photo_index == current_photo_index:
@@ -1041,7 +1043,7 @@ class Slideshow(object):
         y = self.screen_height/2 - DISPLAY_MARGIN
 
         # Draw "from" address.
-        text = "From " + EMAIL_FROM[self.email_from]["first_name"] + " (F12)"
+        text = "From " + config.EMAIL_FROM[self.email_from]["first_name"] + " (F12)"
         string = self.email_from_label.get(text, x, y)
         string.draw()
         y -= EMAIL_LEADING
@@ -1172,8 +1174,20 @@ class Slideshow(object):
     # and show them next.
     def fetch_twilio_photos(self):
         if self.twilio_fetcher:
-            photo = self.twilio_fetcher.get_photo()
+            pathname = self.twilio_fetcher.get_photo_pathname()
+            if not pathname:
+                return
+
+            # Compute hash, add to database. This takes a bit of time and
+            # causes a hiccup in the animation. We'd have to split the hash
+            # and the database work to avoid that.
+            photo_id = handle_new_and_renamed_file(self.con, pathname)
+
+            # Fetch back from database and fix up pathname.
+            photo = db.get_photo_by_id(self.con, photo_id)
             if photo:
+                photo.pathname = pathname
+
                 # Get global photo index. This number goes on forever, not wrapping.
                 photo_index = self.get_current_photo_index()
 
@@ -1288,7 +1302,7 @@ class Slideshow(object):
         title = ", ".join(filter(None, [current_slide.photo.label, current_slide.photo.display_date]))
 
         # Send the high-res version.
-        absolute_pathname = os.path.join(ROOT_DIR, current_slide.photo.pathname)
+        absolute_pathname = os.path.join(config.ROOT_DIR, current_slide.photo.pathname)
 
         # Emails can be comma-separated.
         email_address_list = [email_address.strip() for email_address in email_addresses.split(",")]
@@ -1300,7 +1314,7 @@ class Slideshow(object):
 
         success = True
         try:
-            email_service.send_email(title, absolute_pathname, EMAIL_FROM[self.email_from], email_address_list)
+            email_service.send_email(title, absolute_pathname, config.EMAIL_FROM[self.email_from], email_address_list)
         except Exception as e:
             LOGGER.warn("Got exception emailing to \"%s\" (%s)" % (email_address_list, e))
             success = False
@@ -1377,7 +1391,7 @@ class Slideshow(object):
 
 # Must remove these in-place.
 def remove_unwanted_dirs(dirnames):
-    for dirname in UNWANTED_DIRS:
+    for dirname in config.UNWANTED_DIRS:
         try:
             dirnames.remove(dirname)
         except ValueError:
@@ -1446,7 +1460,7 @@ def handle_new_and_renamed_file(con, pathname):
     label = clean_pathname(pathname)
 
     # We want the hashes of the original files, not the processed ones.
-    absolute_pathname = os.path.join(ROOT_DIR, pathname)
+    absolute_pathname = os.path.join(config.ROOT_DIR, pathname)
 
     image_bytes = open(absolute_pathname).read()
     hash_all = sha.sha(image_bytes).hexdigest()
@@ -1550,10 +1564,10 @@ def main():
 
     # Read photo directory tree. This is a set that represents the photos that
     # are actually available on disk.
-    tree_pathnames = get_tree_photos(ROOT_DIR)
+    tree_pathnames = get_tree_photos(config.ROOT_DIR)
 
     # Resize images.
-    preprocess.process_trees(ROOT_DIR, PROCESSED_ROOT_DIR, tree_pathnames)
+    preprocess.process_trees(config.ROOT_DIR, config.PROCESSED_ROOT_DIR, tree_pathnames)
 
     # Get photo files from database.
     db_photo_files = db.get_all_photo_files(con)
@@ -1570,8 +1584,7 @@ def main():
     print "Photos after date filter: %d" % (len(db_photos),)
 
     if not db_photos:
-        print "No photos. Did you remember to \"sudo mount -a\"?"
-        return
+        print "Warning: No photos found."
 
     # Find a pathname for each photo.
     db_photos = assign_photo_pathname(con, db_photos, tree_pathnames)
@@ -1599,6 +1612,8 @@ def main():
     LOGGER.info("Screen size: %dx%d" % screen_size)
 
     slideshow = Slideshow(db_photos, display, shader, star_sprite, screen_size, con)
+    if config.PARTY_MODE:
+        slideshow.set_fetch_twilio(True)
 
     while display.loop_running():
         slideshow.prefetch(MAX_CACHE_SIZE/2 + 1)

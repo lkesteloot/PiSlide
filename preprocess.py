@@ -41,7 +41,9 @@ def process_file(src_root, dst_root, pathname):
     # Get date of file source.
     mtime = os.path.getmtime(src_absolute_pathname)
 
-    if os.path.exists(dst_absolute_pathname) and os.path.getmtime(dst_absolute_pathname) == mtime:
+    if os.path.exists(dst_absolute_pathname) and \
+            int(os.path.getmtime(dst_absolute_pathname)) == int(mtime):
+
         # Timestamp matches. Assume already processed.
         return
 

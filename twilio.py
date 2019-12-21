@@ -10,7 +10,7 @@ import os
 import config
 
 # How often, in seconds, to fetch messages.
-if PARTY_MODE:
+if config.PARTY_MODE:
     FETCH_PERIOD_S = 1
 else:
     FETCH_PERIOD_S = 60
@@ -73,6 +73,7 @@ def get_json(url, logger):
 # domain name), or None of an error occurred. Returns whether
 # successful.
 def save_image(uri, pathname, logger):
+    logger.info("Fetching photo to " + pathname)
     raw_image = get_raw(uri, False, logger)
     if not raw_image:
         return False
@@ -123,6 +124,7 @@ def download_images(image_path, delete, logger):
 
     for message in messages["messages"]:
         source_phone_number = message["from"]
+        logger.info("Fetching message from %s" % source_phone_number)
         direction = message["direction"]
         num_media = int(message["num_media"])
         if direction == "inbound" and num_media > 0:
@@ -143,7 +145,13 @@ def download_images(image_path, delete, logger):
                         if delete:
                             delete_resources(uri, logger)
         if delete:
-            delete_resources(message["uri"], logger)
+            # We've seen cases where messages appeared in this list a few
+            # seconds before their photos were available. If we catch it in
+            # that window, we'll delete the message before we have a chance
+            # to get the photo. So don't delete messages, just let them live
+            # indefinitely.
+            ## delete_resources(message["uri"], logger)
+            pass
 
     return DownloadResults(messages, images)
 
