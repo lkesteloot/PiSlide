@@ -15,6 +15,9 @@ for example in a kitchen. It has the following features:
   song and artist, and let you play a radio station with one key, stop the music,
   or toggle mute.
 * It can display the next three buses at a particular bus stop (from a NextBus feed).
+* You can send it new photos by texting them to a Twilio phone number.
+* It has a "party mode" that displays the Twilio phone number, so guests can
+  take photos, text them, and see them appear within a few seconds.
 * It displays the time.
 
 # Using the software
@@ -44,6 +47,7 @@ for example in a kitchen. It has the following features:
     radio station favorites list.
 * If you've set up NextBus information (agency and stop), type "B" to toggle
   information about upcoming buses at that stop.
+* If you've set up Twilio fetching, type "Shift-T" to toggle fetching new photos.
 
 # Configuring the software
 

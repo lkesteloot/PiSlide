@@ -369,7 +369,7 @@ class NextbusFetcher(object):
         self.logger.info("Exiting nextbus loop")
 
 # Fetches photos from Twilio in a different thread, keeping the
-# list of fetched images available for fetching and showing in the UI.
+# list of fetched images available for showing in the UI.
 class TwilioFetcher(object):
     def __init__(self):
         self.logger = logging.getLogger("twilio")

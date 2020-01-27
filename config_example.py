@@ -58,7 +58,7 @@ TWILIO_MESSAGE = "Text photos to 415-555-5555"
 
 # Enable this for a party. It has the following effects:
 #
-#    Turns on Twilio fetch mode.
+#    Turns on Twilio fetch mode by default.
 #    Displays the TWILIO_MESSAGE instead of the image's label.
 #    Polls Twilio much more frequently.
 #
