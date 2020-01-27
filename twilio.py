@@ -20,7 +20,7 @@ AUTHORIZATION = "Basic " + base64.b64encode(config.TWILIO_SID + ":" + config.TWI
 
 # A downloaded image.
 class Image(object):
-    def __init__(self, pathname, content_type, phone_number):
+    def __init__(self, pathname, content_type, phone_number, date_sent):
         # Pathname of where the image was saved.
         self.pathname = pathname
 
@@ -29,6 +29,9 @@ class Image(object):
 
         # Phone number that sent the image.
         self.phone_number = phone_number
+
+        # When the image was sent (string).
+        self.date_sent = date_sent
 
 # All information about this fetch.
 class DownloadResults(object):
@@ -124,6 +127,7 @@ def download_images(image_path, delete, logger):
 
     for message in messages["messages"]:
         source_phone_number = message["from"]
+        date_sent = message["date_sent"]
         # logger.info("Fetching message from %s" % source_phone_number)
         direction = message["direction"]
         num_media = int(message["num_media"])
@@ -141,7 +145,7 @@ def download_images(image_path, delete, logger):
                             image_uri = uri[:-5]
                             pathname = os.path.join(image_path, photo_sid + ".jpg")
                             save_image(image_uri, pathname, logger)
-                            images.append(Image(pathname, content_type, source_phone_number))
+                            images.append(Image(pathname, content_type, source_phone_number, date_sent))
                         if delete:
                             delete_resources(uri, logger)
         if delete:
@@ -168,7 +172,7 @@ def main():
     results = download_images(".", delete, logger)
     pprint.pprint(results.messages)
     for image in results.images:
-        print("%s: %s" % (image.phone_number, image.pathname))
+        print("%s (%s): %s" % (image.phone_number, image.date_sent, image.pathname))
 
 if __name__ == "__main__":
     main()

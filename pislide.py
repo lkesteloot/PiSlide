@@ -159,11 +159,11 @@ def capitalize(s):
 
     return s
 
-# Whether the string is entirely made up of digits.
-def is_entirely_number(s):
+# Whether the string is entirely made up of digits of base "base".
+def is_entirely_number(s, base):
     # Try to parse it. Not perfect, it'll accept " 123 ", but close enough.
     try:
-        int(s)
+        int(s, base)
     except ValueError:
         return False
 
@@ -217,10 +217,14 @@ def keep_part(part):
         return False
 
     # All numbers (and not a year)?
-    if is_entirely_number(part) and not is_year(part):
-            return False
-    if part[0] == "P" and is_entirely_number(part[1:]):
-            return False
+    if is_entirely_number(part, 10) and not is_year(part):
+        return False
+    if part[0] == "P" and is_entirely_number(part[1:], 10):
+        return False
+
+    # Twilio image?
+    if part.startswith("ME") and len(part) == 34 and is_entirely_number(part[2:], 16):
+        return False
 
     return True
 
@@ -446,8 +450,8 @@ class TwilioFetcher(object):
     # Resize the downloaded image.
     def _process_image(self, image):
         pathname = image.pathname
-        self.logger.info("Received Twilio image from %s: %s (%s)" %
-                (image.phone_number, pathname, image.content_type))
+        self.logger.info("Received Twilio image from %s on %s: %s (%s)" %
+                (image.phone_number, image.date_sent, pathname, image.content_type))
 
         if image.content_type != "image/jpeg":
             self.logger.warn("Can't handle image type " + image.content_type)
