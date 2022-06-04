@@ -102,6 +102,8 @@ EMAIL_FONT = pi3d.Font("FreeSans.ttf", EMAIL_COLOR, font_size=min(64, MAX_FONT_S
 BUS_MAJOR_FONT = pi3d.Font("FreeSans.ttf", BUS_COLOR, font_size=min(48, MAX_FONT_SIZE))
 BUS_MINOR_FONT = pi3d.Font("FreeSans.ttf", BUS_COLOR, font_size=min(32, MAX_FONT_SIZE))
 
+TWILIO_PATH = os.path.join(config.ROOT_DIR, config.TWILIO_SUBDIR)
+
 g_frame_count = 0
 
 # If "s" starts with prefix, return "s" without prefix. Otherwise returns "s".
@@ -379,9 +381,8 @@ class TwilioFetcher(object):
         self.logger = logging.getLogger("twilio")
         self.logger.setLevel(logging.DEBUG)
 
-        self.twilio_path = os.path.join(config.ROOT_DIR, config.TWILIO_SUBDIR)
-        if not os.path.exists(self.twilio_path):
-            os.makedirs(self.twilio_path)
+        if not os.path.exists(TWILIO_PATH):
+            os.makedirs(TWILIO_PATH)
 
         self.fetching = False
         self.thread = None
@@ -433,7 +434,7 @@ class TwilioFetcher(object):
                     pass
 
                 if self.fetching:
-                    results = twilio.download_images(self.twilio_path, True, self.logger)
+                    results = twilio.download_images(TWILIO_PATH, True, self.logger)
                     if results:
                         for image in results.images:
                             self._process_image(image)
@@ -631,6 +632,9 @@ class BrokenSlide(object):
 
         # When we were last used (drawn, moved, requested).
         self.last_used = 0
+
+        # Whether we zoom in or out.
+        self.swap_zoom = False
 
     def touch(self):
         self.last_used = time.time()
@@ -1444,6 +1448,14 @@ def filter_photos_by_date(db_photos, min_days, max_days):
 
     return [photo for photo in db_photos if is_in_date_range(now - photo.date, min_seconds, max_seconds)]
 
+# Return the db_photos array filtered by which pathnames contain the substring.
+def filter_photos_by_substring(db_photos, substring):
+    if substring is None or substring == "":
+        return db_photos
+    return [photo for photo in db_photos
+            if substring in photo.pathname or
+                (config.PARTY_MODE and photo.pathname.startswith(config.TWILIO_SUBDIR + "/"))]
+
 # Look for new images or images that might have been moved or renamed in the tree.
 # We must make sure to not lose the metadata (rating, rotation).
 def handle_new_and_renamed_files(con, tree_pathnames, db_photo_files):
@@ -1560,6 +1572,7 @@ def main():
     parser.add_argument("--min_rating", help="minimum rating", type=int, default=3)
     parser.add_argument("--min_days", help="min age of photo", metavar="DAYS", type=int)
     parser.add_argument("--max_days", help="max age of photo", metavar="DAYS", type=int)
+    parser.add_argument("--includes", help="only include these paths", metavar="DIR", type=str)
     args = parser.parse_args()
 
     # Open the database.
@@ -1587,12 +1600,15 @@ def main():
     db_photos = filter_photos_by_date(db_photos, args.min_days, args.max_days)
     print "Photos after date filter: %d" % (len(db_photos),)
 
-    if not db_photos:
-        print "Warning: No photos found."
-
     # Find a pathname for each photo.
     db_photos = assign_photo_pathname(con, db_photos, tree_pathnames)
     print "Photos after disk filter: %d" % (len(db_photos),)
+    db_photos = filter_photos_by_substring(db_photos, args.includes)
+    print "Photos after dir filter: %d" % (len(db_photos),)
+
+    if not db_photos:
+        print "Error: No photos found."
+        sys.exit(0)
 
     # Shuffle the photos.
     random.shuffle(db_photos)
