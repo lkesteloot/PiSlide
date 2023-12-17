@@ -73,7 +73,7 @@ STAR_SCALE = 30
 # For some reason our star draws too far to the left, so we adjust it. I can't
 # figure out why.  For all I know maybe the text is too far to the right.
 STAR_OFFSET = 10
-MAX_PAUSE_SECONDS = 5*60
+MAX_PAUSE_SECONDS = 60*60
 MAX_BUS_SECONDS = 60*60
 MAX_TWILIO_SECONDS = 8*60*60
 
