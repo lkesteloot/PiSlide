@@ -2,7 +2,7 @@
 # From https://github.com/apparentlymart/python-nextbus
 
 from xml.etree import ElementTree
-from urllib import urlencode
+from urllib.parse import urlencode
 
 
 NEXTBUS_SERVICE_URL = "http://webservices.nextbus.com/service/publicXMLFeed"
@@ -23,13 +23,13 @@ def _init_fetcher():
     have_urllib2 = True
     
     try:
-        import urllib2
+        import urllib.request, urllib.error, urllib.parse
     except:
         have_urllib2 = False
 
     if have_urllib2:
         def urllib2_fetcher(url):
-            return urllib2.urlopen(url)
+            return urllib.request.urlopen(url)
         _url_fetcher = urllib2_fetcher
 _init_fetcher()
 
@@ -182,13 +182,13 @@ def get_predictions_for_stop(agency_tag, stop_id):
 @memoize_in_cache("all_vehicles", 30)
 def get_all_vehicle_locations(agency_tag):
     etree = fetch_nextbus_url("vehicleLocations", agency_tag, ('t', 0))
-    return map(lambda elem : Vehicle.from_elem(elem), etree.findall("vehicle"))
+    return [Vehicle.from_elem(elem) for elem in etree.findall("vehicle")]
 
 
 @memoize_in_cache("route_vehicles", 30)
 def get_vehicle_locations_on_route(agency_tag, route_tag):
     etree = fetch_nextbus_url("vehicleLocations", agency_tag, ('r', route_tag), ('t', 0))
-    return map(lambda elem : Vehicle.from_elem(elem), etree.findall("vehicle"))
+    return [Vehicle.from_elem(elem) for elem in etree.findall("vehicle")]
 
 
 def _standard_repr(self):
@@ -288,11 +288,11 @@ class RouteConfig:
 
     @property
     def stops(self):
-        return self.stops_dict.values()
+        return list(self.stops_dict.values())
 
     @property
     def directions(self):
-        return self.directions_dict.values()
+        return list(self.directions_dict.values())
 
     def has_stop_id(stop_id):
         return stop_id in self.stops_dict

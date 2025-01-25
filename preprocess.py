@@ -47,14 +47,14 @@ def process_file(src_root, dst_root, pathname):
         # Timestamp matches. Assume already processed.
         return
 
-    print "    Processing file " + src_absolute_pathname
+    print("    Processing file " + src_absolute_pathname)
 
     # Read image.
     try:
         im = Image.open(src_absolute_pathname)
     except IOError as e:
         # Just skip image.
-        print "        Got error processing file: " + str(e)
+        print("        Got error processing file: " + str(e))
         return
     orig_width, orig_height = width, height = im.size
     size = width*height
@@ -65,11 +65,11 @@ def process_file(src_root, dst_root, pathname):
         new_height = MAX_HEIGHT
         new_width = int(width*MAX_HEIGHT/height)
         new_size = new_width*new_height
-        print "        Resizing from (%d,%d) to (%d,%d), which is %d%% of original" % (width, height, new_width, new_height, new_size*100/size)
+        print("        Resizing from (%d,%d) to (%d,%d), which is %d%% of original" % (width, height, new_width, new_height, new_size*100/size))
         im = im.resize((new_width, new_height), Image.BICUBIC)
         width, height = im.size
     n = len(WIDTHS)
-    for i in xrange(n - 1, 0, -1):
+    for i in range(n - 1, 0, -1):
         if width == WIDTHS[i]:
             # No need to resize as already a golden size.
             break
@@ -77,7 +77,7 @@ def process_file(src_root, dst_root, pathname):
             new_width = WIDTHS[i]
             new_height = int(new_width*height/width)
             new_size = new_width*new_height
-            print "        Resizing from (%d,%d) to (%d,%d), which is %d%% of original" % (width, height, new_width, new_height, new_size*100/size)
+            print("        Resizing from (%d,%d) to (%d,%d), which is %d%% of original" % (width, height, new_width, new_height, new_size*100/size))
             im = im.resize((new_width, new_height), Image.BICUBIC)
             width, height = im.size
             break
@@ -91,13 +91,13 @@ def process_file(src_root, dst_root, pathname):
 # Process files from src_root into dst_root. Only process files specified
 # by the (relative) pathnames.
 def process_trees(src_root, dst_root, pathnames):
-    print "Preprocessing trees with %d files..." % len(pathnames)
+    print("Preprocessing trees with %d files..." % len(pathnames))
 
     for file_count, pathname in enumerate(pathnames):
         process_file(src_root, dst_root, pathname)
 
         if (file_count + 1) % 10000 == 0:
-            print "    Analyzed %d files" % (file_count + 1,)
+            print("    Analyzed %d files" % (file_count + 1,))
 
-    print "    Analyzed %d files" % (len(pathnames),)
+    print("    Analyzed %d files" % (len(pathnames),))
 

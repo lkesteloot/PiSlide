@@ -15,7 +15,7 @@
 # Interfaces with the Sonos music system.
 
 import soco
-import Queue
+import queue
 import threading
 import logging
 import time
@@ -51,10 +51,10 @@ class SonosController(object):
         self.running = True
 
         # SonosCommand objects:
-        self.command_queue = Queue.Queue()
+        self.command_queue = queue.Queue()
 
         # SonosStatus objects:
-        self.status_queue = Queue.Queue()
+        self.status_queue = queue.Queue()
 
     def start(self):
         self.thread = threading.Thread(target=self._loop)
@@ -81,7 +81,7 @@ class SonosController(object):
     def get_status(self):
         try:
             return self.status_queue.get_nowait()
-        except Queue.Empty:
+        except queue.Empty:
             return None
 
     # Runs in the other thread.
@@ -102,7 +102,7 @@ class SonosController(object):
                 try:
                     command = self.command_queue.get(True, STATUS_POLL_INTERVAL)
                     self._process_command(command)
-                except Queue.Empty:
+                except queue.Empty:
                     # No problem, ignore.
                     pass
             except BaseException as e:
@@ -204,7 +204,7 @@ def main():
     while True:
         status = controller.get_status()
         if status:
-            print status
+            print(status)
         time.sleep(1)
 
 if __name__ == "__main__":

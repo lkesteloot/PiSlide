@@ -1,8 +1,8 @@
 
 # Simple REST interface to the Twilio phone SMS service.
 
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 import base64
 import json
 import os
@@ -54,12 +54,12 @@ def get_raw(url, auth, logger):
     # Our auth information.
     if auth:
         headers["Authorization"] = AUTHORIZATION
-    request = urllib2.Request(url, None, headers)
+    request = urllib.request.Request(url, None, headers)
     try:
-        f = urllib2.urlopen(request)
+        f = urllib.request.urlopen(request)
         data = f.read()
         f.close()
-    except urllib2.HTTPError as e:
+    except urllib.error.HTTPError as e:
         if logger:
             logger.warning("Can't fetch \"%s\" from Twilio (%s)" % (url, e,))
         return None
@@ -102,13 +102,13 @@ def delete_resources(uri, logger):
     headers = {
         "Authorization": "Basic " + base64.b64encode(config.TWILIO_SID + ":" + config.TWILIO_TOKEN),
     }
-    request = urllib2.Request(url, None, headers)
+    request = urllib.request.Request(url, None, headers)
     request.get_method = lambda: "DELETE"
     try:
-        f = urllib2.urlopen(request)
+        f = urllib.request.urlopen(request)
         f.read()
         f.close()
-    except urllib2.HTTPError as e:
+    except urllib.error.HTTPError as e:
         if logger:
             logger.warning("Can't delete Twilio resource \"%s\" (%s)" % (uri, e,))
 
@@ -172,7 +172,7 @@ def main():
     results = download_images(".", delete, logger)
     pprint.pprint(results.messages)
     for image in results.images:
-        print("%s (%s): %s" % (image.phone_number, image.date_sent, image.pathname))
+        print(("%s (%s): %s" % (image.phone_number, image.date_sent, image.pathname)))
 
 if __name__ == "__main__":
     main()

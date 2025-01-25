@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Importing pi3d takes a long time, so show something.
-print "Importing..."
+print("Importing...")
 import os
 import sys
 import random
@@ -22,7 +22,7 @@ import re
 import logging
 import argparse
 import math
-import Queue
+import queue
 import threading
 from PIL import Image
 sys.path.insert(1, "/home/pi/pi3d")
@@ -88,7 +88,7 @@ MUSIC_COLOR = (255, 255, 255, 100)
 STATION_COLOR = (255, 255, 255, 200)
 EMAIL_COLOR = (255, 255, 255, 255)
 BUS_COLOR = (255, 255, 255, 200)
-print "Loading fonts..."
+print("Loading fonts...")
 # There seems to be a bug in newer versions of pi3d where text in large fonts show some
 # junk above and below the text. A size of 48 seems to work fine.
 MAX_FONT_SIZE = 48
@@ -320,10 +320,10 @@ class NextbusFetcher(object):
         self.running = True
 
         # Bool for whether fetching:
-        self.command_queue = Queue.Queue()
+        self.command_queue = queue.Queue()
 
         # Predictions objects:
-        self.predictions_queue = Queue.Queue()
+        self.predictions_queue = queue.Queue()
 
     # Start the thread. Does not start fetching.
     def start(self):
@@ -351,7 +351,7 @@ class NextbusFetcher(object):
     def get_predictions(self):
         try:
             return self.predictions_queue.get_nowait()
-        except Queue.Empty:
+        except queue.Empty:
             return None
 
     # Runs in the other thread.
@@ -360,7 +360,7 @@ class NextbusFetcher(object):
             try:
                 try:
                     self.fetching = self.command_queue.get(True, 10)
-                except Queue.Empty:
+                except queue.Empty:
                     # No problem, ignore.
                     pass
 
@@ -389,10 +389,10 @@ class TwilioFetcher(object):
         self.running = True
 
         # Bool for whether fetching:
-        self.command_queue = Queue.Queue()
+        self.command_queue = queue.Queue()
 
         # Each entry is a pathname to a newly-downloaded and resized photo:
-        self.photo_pathname_queue = Queue.Queue()
+        self.photo_pathname_queue = queue.Queue()
 
     # Start the thread. Does not start fetching.
     def start(self):
@@ -420,7 +420,7 @@ class TwilioFetcher(object):
     def get_photo_pathname(self):
         try:
             return self.photo_pathname_queue.get_nowait()
-        except Queue.Empty:
+        except queue.Empty:
             return None
 
     # Runs in the other thread.
@@ -429,7 +429,7 @@ class TwilioFetcher(object):
             try:
                 try:
                     self.fetching = self.command_queue.get(True, twilio.FETCH_PERIOD_S)
-                except Queue.Empty:
+                except queue.Empty:
                     # No problem, ignore.
                     pass
 
@@ -651,10 +651,10 @@ class SlideLoader(object):
         self.running = True
 
         # Photo:
-        self.request_queue = Queue.Queue()
+        self.request_queue = queue.Queue()
 
         # (Photo, Slide) tuples:
-        self.reply_queue = Queue.Queue()
+        self.reply_queue = queue.Queue()
 
         # Already requested photo IDs:
         self.already_requested_ids = set()
@@ -693,7 +693,7 @@ class SlideLoader(object):
                 photo, slide = self.reply_queue.get_nowait()
                 self.already_requested_ids.discard(photo.id)
                 yield photo, slide
-            except Queue.Empty:
+            except queue.Empty:
                 break
 
     # Runs in thread.
@@ -791,7 +791,7 @@ class SlideCache(object):
         oldest_photo_id = None
         oldest_time = None
 
-        for photo_id, slide in self.cache.items():
+        for photo_id, slide in list(self.cache.items()):
             if oldest_time is None or slide.last_used < oldest_time:
                 oldest_photo_id = photo_id
                 oldest_time = slide.last_used
@@ -800,7 +800,7 @@ class SlideCache(object):
             del self.cache[oldest_photo_id]
 
     def get_slides(self):
-        return self.cache.values()
+        return list(self.cache.values())
 
     def get_cache(self):
         return self.cache
@@ -1307,7 +1307,7 @@ class Slideshow(object):
     # Returns whether successful.
     def email_photo(self, email_addresses):
         _, current_slide, _, _, _ = self.get_current_slide()
-        title = ", ".join(filter(None, [current_slide.photo.label, current_slide.photo.display_date]))
+        title = ", ".join([_f for _f in [current_slide.photo.label, current_slide.photo.display_date] if _f])
 
         # Send the high-res version.
         absolute_pathname = os.path.join(config.ROOT_DIR, current_slide.photo.pathname)
@@ -1316,7 +1316,7 @@ class Slideshow(object):
         email_address_list = [email_address.strip() for email_address in email_addresses.split(",")]
 
         # Remove empty addresses (from trailing commas, etc.).
-        email_address_list = filter(None, email_address_list)
+        email_address_list = [_f for _f in email_address_list if _f]
 
         LOGGER.info("Emailing " + absolute_pathname + " to " + str(email_address_list))
 
@@ -1411,7 +1411,7 @@ def get_tree_photos(root_dir):
     tree_pathnames = set()
 
     LOGGER.debug("Scanning photo directories...")
-    print "Scanning photo directories..."
+    print("Scanning photo directories...")
     before = time.time()
     for dirpath, dirnames, filenames in os.walk(root_dir):
         remove_unwanted_dirs(dirnames)
@@ -1419,7 +1419,7 @@ def get_tree_photos(root_dir):
             for filename in filenames:
                 if is_image(filename):
                     pathname = os.path.join(dirpath, filename)
-                    pathname = unicode(pathname, "utf8")
+                    pathname = str(pathname, "utf8")
                     tree_pathnames.add(os.path.relpath(pathname, root_dir))
     after = time.time()
 
@@ -1465,14 +1465,14 @@ def handle_new_and_renamed_files(con, tree_pathnames, db_photo_files):
     # Figure out which pathnames we need to analyze.
     pathnames_to_do = tree_pathnames - set(db_pathnames.keys())
 
-    print "Analyzing %d new or renamed photos..." % len(pathnames_to_do)
+    print("Analyzing %d new or renamed photos..." % len(pathnames_to_do))
     for pathname in pathnames_to_do:
         handle_new_and_renamed_file(con, pathname)
 
 # Create a new photo file for this pathname, and optionally a new photo.
 # Returns the photo ID (new or old).
 def handle_new_and_renamed_file(con, pathname):
-    print "    Computing hash for " + pathname
+    print("    Computing hash for " + pathname)
     label = clean_pathname(pathname)
 
     # We want the hashes of the original files, not the processed ones.
@@ -1490,7 +1490,7 @@ def handle_new_and_renamed_file(con, pathname):
     photo = db.get_photo_by_hash_back(con, hash_back)
     if not photo:
         # New photo.
-        print "        New photo."
+        print("        New photo.")
         rotation = get_file_rotation(absolute_pathname) or 0
         rating = 3
         mtime = os.path.getmtime(absolute_pathname)
@@ -1498,7 +1498,7 @@ def handle_new_and_renamed_file(con, pathname):
         photo_id = db.create_photo(con, hash_back, rotation, rating, mtime, display_date, label)
     else:
         # Renamed or moved photo.
-        print "        Renamed or moved photo."
+        print("        Renamed or moved photo.")
         # Leave the timestamp the same, but update the label.
         photo.label = label
         db.save_photo(con, photo)
@@ -1520,7 +1520,7 @@ def get_file_rotation(absolute_pathname):
             exif = image._getexif()
         except Exception as e:
             exif = None
-            print "Exception getting EXIF data for %s: %s" % (absolute_pathname, e)
+            print("Exception getting EXIF data for %s: %s" % (absolute_pathname, e))
         if exif:
             exif_rotation = exif.get(0x0112, 1)
             if exif_rotation == 6:
@@ -1557,10 +1557,10 @@ def assign_photo_pathname(con, db_photos, tree_pathnames):
             # Can't find any file on disk for this photo.
             warning_count += 1
             if warning_count <= MAX_NO_FILE_WARNINGS:
-                print "No file on disk for %s (%s)" % (photo.hash_back, photo.label)
+                print("No file on disk for %s (%s)" % (photo.hash_back, photo.label))
 
     if warning_count:
-        print "Files missing on disk: %d" % warning_count
+        print("Files missing on disk: %d" % warning_count)
 
     return good_photos
 
@@ -1594,20 +1594,20 @@ def main():
 
     # Keep only photos of the right rating and date range.
     db_photos = db.get_all_photos(con)
-    print "Total photos: %d" % (len(db_photos),)
+    print("Total photos: %d" % (len(db_photos),))
     db_photos = filter_photos_by_rating(db_photos, args.min_rating)
-    print "Photos after rating filter: %d" % (len(db_photos),)
+    print("Photos after rating filter: %d" % (len(db_photos),))
     db_photos = filter_photos_by_date(db_photos, args.min_days, args.max_days)
-    print "Photos after date filter: %d" % (len(db_photos),)
+    print("Photos after date filter: %d" % (len(db_photos),))
 
     # Find a pathname for each photo.
     db_photos = assign_photo_pathname(con, db_photos, tree_pathnames)
-    print "Photos after disk filter: %d" % (len(db_photos),)
+    print("Photos after disk filter: %d" % (len(db_photos),))
     db_photos = filter_photos_by_substring(db_photos, args.includes)
-    print "Photos after dir filter: %d" % (len(db_photos),)
+    print("Photos after dir filter: %d" % (len(db_photos),))
 
     if not db_photos:
-        print "Error: No photos found."
+        print("Error: No photos found.")
         sys.exit(0)
 
     # Shuffle the photos.
