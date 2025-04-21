@@ -1,9 +1,10 @@
 
 SRC = $(wildcard *.cpp)
+HEADERS = $(wildcard *.h)
 APP = pislide
 RAYLIB_SRC = $(HOME)/others/raylib/src
 CXXFLAGS = -std=c++23 -I $(RAYLIB_SRC)
-LIBS = $(RAYLIB_SRC)/libraylib.a
+LIBS = $(RAYLIB_SRC)/libraylib.a -lsqlite3
 RUN_PREFIX = 
 
 ifeq ($(HOSTTYPE), Linux-aarch64)
@@ -17,7 +18,7 @@ endif
 run: $(APP)
 	$(RUN_PREFIX) ./$(APP)
 
-$(APP): $(SRC) Makefile
+$(APP): $(SRC) $(HEADERS) Makefile
 	$(CXX) $(CXXFLAGS) $(SRC) $(LIBS) -o $(APP)
 
 .PHONY: clean

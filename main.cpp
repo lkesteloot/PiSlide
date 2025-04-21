@@ -1,10 +1,17 @@
 
 #include <stdio.h>
+#include <iostream>
+#include <stdexcept>
 
 #include "raylib.h"
 #include "raymath.h"
 
-int main() {
+#include "database.h"
+
+int main_can_throw() {
+    Database database;
+    database.printPersons();
+    return 0;
     // SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI | FLAG_FULLSCREEN_MODE);
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
     InitWindow(0, 0, "Hello Raylib");
@@ -50,4 +57,13 @@ int main() {
     CloseWindow();
 
     return 0;
+}
+
+int main() {
+    try {
+        return main_can_throw();
+    } catch (const std::exception &e) {
+        std::cerr << "Caught exception (" << e.what() << ")" << std::endl;
+    }
+    return -1;
 }
