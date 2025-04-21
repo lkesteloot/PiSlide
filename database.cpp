@@ -6,14 +6,22 @@
 
 constexpr std::string DATABASE_PATHNAME = "pislide.db";
 
-namespace {
-    /**
-     * Convenience method for getting a C++ string from a column.
-     */
-    std::string sqlite3_column_string(sqlite3_stmt *stmt, int col) {
-        return reinterpret_cast<const char *>(sqlite3_column_text(stmt, col));
+// --------------------------------------------------------------------------------
+
+bool PreparedStatement::step() const {
+    int rc = sqlite3_step(mStmt);
+    if (rc == SQLITE_ROW) {
+        return true;
     }
+    if (rc == SQLITE_DONE) {
+        return false;
+    }
+    std::stringstream ss;
+    ss << "can't step prepared statement: " << sqlite3_errmsg(sqlite3_db_handle(mStmt));
+    throw std::invalid_argument(ss.str());
 }
+
+// --------------------------------------------------------------------------------
 
 Database::Database() {
     mDb = nullptr;
@@ -48,17 +56,9 @@ std::unique_ptr<PreparedStatement> Database::prepare(std::string const &sql) con
 void Database::printPersons() const {
     auto stmt = prepare("SELECT id, email_address FROM person");
 
-    int rc;
-    while ((rc = sqlite3_step(stmt->get())) == SQLITE_ROW) {
-        Person person(
-                sqlite3_column_int(stmt->get(), 0),
-                sqlite3_column_string(stmt->get(), 1));
-
+    while (stmt->step()) {
+        Person person(stmt->getInt(0), stmt->getString(1));
         printf("%d %s\n", person.getId(), person.getEmailAddress().c_str());
-    }
-    if (rc != SQLITE_DONE) {
-        fprintf(stderr, "Can't get row: %s\n", sqlite3_errmsg(mDb));
-        return;
     }
 }
 

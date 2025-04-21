@@ -41,8 +41,24 @@ public:
     PreparedStatement(const PreparedStatement &) = delete;
     PreparedStatement &operator=(const PreparedStatement &) = delete;
 
-    sqlite3_stmt *get() const {
-        return mStmt;
+    /**
+     * Step to the next row, returning whether there are any rows left.
+     * Throws on error.
+     */
+    bool step() const;
+
+    /**
+     * Get the integer at the specified column index.
+     */
+    int getInt(int col) const {
+        return sqlite3_column_int(mStmt, col);
+    }
+
+    /**
+     * Gets the string at the specified column index.
+     */
+    std::string getString(int col) const {
+        return reinterpret_cast<const char *>(sqlite3_column_text(mStmt, col));
     }
 };
 
