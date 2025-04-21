@@ -1,10 +1,13 @@
 
+#include <iostream> // TODO remove
 #include <stdexcept>
 #include <sstream>
 
 #include "database.h"
 
-constexpr std::string DATABASE_PATHNAME = "pislide.db";
+static std::string DATABASE_PATHNAME = "pislide.db";
+static std::string PHOTO_FIELDS = "id, hash_back, rotation, rating, date, display_date, label";
+static std::string PHOTO_FILE_FIELDS = "pathname, hash_all, hash_back";
 
 // --------------------------------------------------------------------------------
 
@@ -57,8 +60,43 @@ void Database::printPersons() const {
     auto stmt = prepare("SELECT id, email_address FROM person");
 
     while (stmt->step()) {
-        Person person(stmt->getInt(0), stmt->getString(1));
-        printf("%d %s\n", person.getId(), person.getEmailAddress().c_str());
+        Person person {
+            .id = stmt->getInt(0),
+            .emailAddress { stmt->getString(1) },
+        };
+        printf("%d %s\n", person.id, person.emailAddress.c_str());
     }
 }
 
+std::vector<Photo> Database::getAllPhotos() const {
+    auto stmt = prepare(std::string("SELECT ") + PHOTO_FIELDS + " FROM photo");
+    std::vector<Photo> photos;
+
+    while (stmt->step()) {
+        photos.emplace_back(
+                stmt->getInt(0),
+                stmt->getString(1),
+                stmt->getInt(2),
+                stmt->getInt(3),
+                stmt->getLong(4),
+                stmt->getString(5),
+                stmt->getString(6),
+                stmt->getString(7));
+    }
+
+    return photos;
+}
+
+std::vector<PhotoFile> Database::getAllPhotoFiles() const {
+    auto stmt = prepare(std::string("SELECT ") + PHOTO_FILE_FIELDS + " FROM photo_file");
+    std::vector<PhotoFile> photoFiles;
+
+    while (stmt->step()) {
+        photoFiles.emplace_back(
+                stmt->getString(0),
+                stmt->getString(1),
+                stmt->getString(2));
+    }
+
+    return photoFiles;
+}
