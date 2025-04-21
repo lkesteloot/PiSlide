@@ -2,3 +2,6 @@
 *.db
 *.db-journal
 config.py
+resources
+/pislide
+.python-version
