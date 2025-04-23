@@ -3,7 +3,7 @@ SRC = $(wildcard *.cpp)
 HEADERS = $(wildcard *.h)
 APP = pislide
 RAYLIB_SRC = $(HOME)/others/raylib/src
-CXXFLAGS = -std=c++23 -I $(RAYLIB_SRC)
+CXXFLAGS = -std=c++23 -I $(RAYLIB_SRC) -Wmissing-field-initializers
 LIBS = $(RAYLIB_SRC)/libraylib.a -lsqlite3
 RUN_PREFIX = 
 
