@@ -19,6 +19,8 @@
 #pragma GCC diagnostic pop
 
 #include "database.h"
+#include "slideshow.h"
+#include "executor.h"
 
 namespace {
     constexpr int MAX_NO_FILE_WARNINGS = 10;
@@ -221,6 +223,8 @@ int main_can_throw() {
     // dbPhotos = filter_photos_by_substring(dbPhotos, args.includes)
     // print("Photos after dir filter: %d" % (len(dbPhotos),))
 
+    std::cout << "Final photos to be shown: " << dbPhotos.size() << std::endl;
+
     if (dbPhotos.empty()) {
         std::cerr << "Error: No photos found." << std::endl;
         return -1;
@@ -231,15 +235,84 @@ int main_can_throw() {
     std::mt19937 gen(rd());
     std::shuffle(dbPhotos.begin(), dbPhotos.end(), gen);
 
+    Executor<int,int> executor(4, [](int x) { return x * 2; });
+    executor.ask(7);
+    // std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::optional<int> qq = executor.get();
+    if (qq.has_value()) {
+        std::cout << "Value: " << *qq << std::endl;
+    } else {
+        std::cout << "No value" << std::endl;
+    }
+
     return 0;
     // SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI | FLAG_FULLSCREEN_MODE);
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
-    InitWindow(0, 0, "Hello Raylib");
+    InitWindow(0, 0, "PiSlide");
+
+    // This is really the window size:
     int screenWidth = GetScreenWidth();
     int screenHeight = GetScreenHeight();
-    printf("Screen size: %d %d\n", screenWidth, screenHeight); // 1728 1117
+    std::cout << "Window size: " << screenWidth << "x" << screenHeight << std::endl;
 
-    SetTargetFPS(30);
+    // Load the star icon.
+    /*
+    star_texture = pi3d.Texture("outline-star-256.png", blend=True, mipmap=True)
+    star_sprite = pi3d.ImageSprite(star_texture, shader, camera=camera, w=1.0, h=1.0, z=0.05)
+    star_sprite.set_alpha(0.5)
+    LOGGER.info("Star icon: %dx%d" % (star_texture.ix, star_texture.iy))
+    */
+
+    // Match Python version.
+    SetTargetFPS(40);
+
+    Slideshow slideshow(dbPhotos, screenWidth, screenHeight, database);
+
+    while (slideshow.loopRunning()) {
+        // slideshow.prefetch(MAX_CACHE_SIZE/2 + 1);
+        slideshow.move();
+        // slideshow.fetch_twilio_photos();
+        slideshow.draw();
+
+        /*
+        key = keyboard.read()
+        if key != -1:
+            took_key = slideshow.take_key(key)
+            if not took_key:
+                if key == ord("Q"):
+                    slideshow.shutdown()
+                    keyboard.close()
+                    display.stop()
+                elif key == ord("r"):
+                    slideshow.rotate_clockwise()
+                elif key == ord("l"):
+                    slideshow.rotate_counterclockwise()
+                elif key == ord(" "):
+                    slideshow.toggle_pause()
+                elif key == 261: # Right arrow.
+                    slideshow.jump_relative(1)
+                elif key == 260: # Left arrow.
+                    slideshow.jump_relative(-1)
+                elif key == ord("D"):
+                    slideshow.toggle_debug()
+                elif key == ord("m"):
+                    slideshow.mute()
+                elif key == ord("s"):
+                    slideshow.stop_music()
+                elif key == ord("e"):
+                    slideshow.prompt_email()
+                elif key == ord("b"):
+                    slideshow.toggle_bus()
+                elif key == ord("T"):
+                    slideshow.toggle_twilio()
+                elif key >= ord("1") and key <= ord("5"):
+                    slideshow.rate_photo(key - ord("1") + 1)
+                elif key >= FIRST_FUNCTION_KEY and key < FIRST_FUNCTION_KEY + 10:
+                    slideshow.play_radio_station(key - FIRST_FUNCTION_KEY)
+                else:
+                    LOGGER.info("Got unknown key %d" % key)
+                    */
+    }
 
     Texture texture1 = LoadTexture("resources/photo1.jpg");
     Texture texture2 = LoadTexture("resources/photo2.jpg");
