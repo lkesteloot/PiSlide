@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "database.h"
+#include "slide.h"
 
 class Slideshow {
     std::vector<Photo> const &mDbPhotos;

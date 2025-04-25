@@ -21,6 +21,7 @@
 #include "database.h"
 #include "slideshow.h"
 #include "executor.h"
+#include "util.h"
 
 namespace {
     constexpr int MAX_NO_FILE_WARNINGS = 10;
@@ -245,7 +246,8 @@ int main_can_throw() {
         std::cout << "No value" << std::endl;
     }
 
-    return 0;
+    // return 0;
+
     // SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI | FLAG_FULLSCREEN_MODE);
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
     InitWindow(0, 0, "PiSlide");
@@ -268,11 +270,26 @@ int main_can_throw() {
 
     Slideshow slideshow(dbPhotos, screenWidth, screenHeight, database);
 
+    Photo photo = dbPhotos[0];
+    std::string pathname = rootPath + "/" + photo.pathname;
+    Texture texture = LoadTexture(pathname.c_str());
+    Slide slide(photo, texture);
+    slide.computeIdealSize(screenWidth, screenHeight);
+
+    double startTime = now();
     while (slideshow.loopRunning()) {
         // slideshow.prefetch(MAX_CACHE_SIZE/2 + 1);
         slideshow.move();
+        slide.move(false, false, now() - startTime - 3);
         // slideshow.fetch_twilio_photos();
+
+
+        BeginDrawing();
+        ClearBackground(BLACK);
         slideshow.draw();
+        slide.draw(screenWidth, screenHeight);
+        DrawFPS(10, 10);
+        EndDrawing();
 
         /*
         key = keyboard.read()
@@ -313,6 +330,7 @@ int main_can_throw() {
                     LOGGER.info("Got unknown key %d" % key)
                     */
     }
+    return 0;
 
     Texture texture1 = LoadTexture("resources/photo1.jpg");
     Texture texture2 = LoadTexture("resources/photo2.jpg");

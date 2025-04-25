@@ -1,0 +1,18 @@
+
+#pragma once
+
+/**
+ * Computes a modulo b. Assumes b is positive. The
+ * result is always between 0 (inclusive) and b (exclusive).
+ */
+int modulo(int a, int b);
+
+/**
+ * Return a number that is t (which is 0 to 1) between a and b.
+ */
+float interpolate(float a, float b, float t);
+
+/**
+ * Time in seconds since some arbitrary time.
+ */
+double now();
