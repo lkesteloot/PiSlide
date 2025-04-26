@@ -2,6 +2,7 @@
 #pragma once
 
 #include <algorithm>
+#include <optional>
 
 #include "raylib.h"
 

@@ -2,6 +2,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <memory>
 #include <sqlite3.h>
 
