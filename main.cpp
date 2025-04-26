@@ -13,15 +13,19 @@
 #include <map>
 
 #include "raylib.h"
+
+/* TODO delete?
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #include "raymath.h"
 #pragma GCC diagnostic pop
+*/
 
 #include "database.h"
 #include "slideshow.h"
 #include "executor.h"
 #include "util.h"
+#include "slidecache.h"
 
 namespace {
     constexpr int MAX_NO_FILE_WARNINGS = 10;
@@ -133,6 +137,7 @@ std::set<std::string> traverseDirectoryTree(std::string const &rootDir) {
  * invalid photos (those with no disk files) removed.
  */
 std::vector<Photo> assignPhotoPathnames(Database const &database,
+        std::string const &rootPath,
         std::vector<Photo> const &dbPhotos,
         std::set<std::string> const &diskPathnames) {
 
@@ -158,6 +163,7 @@ std::vector<Photo> assignPhotoPathnames(Database const &database,
             if (diskPathnames.contains(photoFile->second->pathname)) {
                 Photo newPhoto = photo;
                 newPhoto.pathname = photoFile->second->pathname;
+                newPhoto.absolutePathname = rootPath + "/" + newPhoto.pathname;
                 goodPhotos.push_back(newPhoto);
                 found = true;
                 break;
@@ -218,7 +224,7 @@ int main_can_throw() {
     // print("Photos after date filter: %d" % (len(dbPhotos),))
 
     // Find a pathname for each photo.
-    dbPhotos = assignPhotoPathnames(database, dbPhotos, diskPathnames);
+    dbPhotos = assignPhotoPathnames(database, rootPath, dbPhotos, diskPathnames);
 
     // print("Photos after disk filter: %d" % (len(dbPhotos),))
     // dbPhotos = filter_photos_by_substring(dbPhotos, args.includes)
@@ -235,16 +241,6 @@ int main_can_throw() {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::shuffle(dbPhotos.begin(), dbPhotos.end(), gen);
-
-    Executor<int,int> executor(4, [](int x) { return x * 2; });
-    executor.ask(7);
-    // std::this_thread::sleep_for(std::chrono::seconds(2));
-    std::optional<int> qq = executor.get();
-    if (qq.has_value()) {
-        std::cout << "Value: " << *qq << std::endl;
-    } else {
-        std::cout << "No value" << std::endl;
-    }
 
     // return 0;
 
@@ -265,31 +261,19 @@ int main_can_throw() {
     LOGGER.info("Star icon: %dx%d" % (star_texture.ix, star_texture.iy))
     */
 
-    // Match Python version.
+    // Match Python version FPS.
     SetTargetFPS(40);
 
     Slideshow slideshow(dbPhotos, screenWidth, screenHeight, database);
-
-    Photo photo = dbPhotos[0];
-    std::string pathname = rootPath + "/" + photo.pathname;
-    Texture texture = LoadTexture(pathname.c_str());
-    Slide slide(photo, texture);
-    slide.computeIdealSize(screenWidth, screenHeight);
 
     double startTime = now();
     while (slideshow.loopRunning()) {
         // slideshow.prefetch(MAX_CACHE_SIZE/2 + 1);
         slideshow.move();
-        slide.move(false, false, now() - startTime - 3);
         // slideshow.fetch_twilio_photos();
 
 
-        BeginDrawing();
-        ClearBackground(BLACK);
         slideshow.draw();
-        slide.draw(screenWidth, screenHeight);
-        DrawFPS(10, 10);
-        EndDrawing();
 
         /*
         key = keyboard.read()
@@ -330,40 +314,6 @@ int main_can_throw() {
                     LOGGER.info("Got unknown key %d" % key)
                     */
     }
-    return 0;
-
-    Texture texture1 = LoadTexture("resources/photo1.jpg");
-    Texture texture2 = LoadTexture("resources/photo2.jpg");
-
-    float t = 0;
-
-    while (!WindowShouldClose()) {
-        BeginDrawing();
-        ClearBackground(BLACK);
-        DrawText("Hello Raylib", 200, 200, 20, WHITE);
-        {
-            float scale = static_cast<float>(screenWidth)/texture1.width*Lerp(0.8, 1.2, t);
-            float x = (screenWidth - texture1.width*scale)/2;
-            float y = (screenHeight - texture1.height*scale)/2;
-            DrawTextureEx(texture1, Vector2 { x, y }, 0, scale, Fade(WHITE, t));
-        }
-        {
-            float scale = static_cast<float>(screenWidth)/texture2.width*Lerp(1.2, 0.8, t);
-            float x = (screenWidth - texture2.width*scale)/2;
-            float y = (screenHeight - texture2.height*scale)/2;
-            DrawTextureEx(texture2, Vector2 { x, y }, 0, scale, Fade(WHITE, 1 - t));
-        }
-        t += 0.003;
-        if (t > 1) {
-            t = 1;
-        }
-
-        DrawFPS(10, 10);
-        EndDrawing();
-    }
-
-    UnloadTexture(texture1);
-    UnloadTexture(texture2);
 
     CloseWindow();
 

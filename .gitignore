@@ -5,3 +5,4 @@ config.py
 resources
 /pislide
 .python-version
+*.dSYM

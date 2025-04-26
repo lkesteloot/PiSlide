@@ -57,7 +57,7 @@ public:
     /**
      * Non-blocking way to dequeue data.
      */
-    std::optional<T> try_dequeue2() {
+    std::optional<T> try_dequeue() {
         std::lock_guard<std::mutex> lock(mMutex);
         if (mDataQueue.empty()) {
             return std::optional<T>();

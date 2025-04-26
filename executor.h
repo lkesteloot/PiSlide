@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <thread>
 #include <functional>
 #include <memory>
@@ -13,7 +14,7 @@
 template <typename REQUEST, typename RESPONSE>
 class Executor {
     // The function to call for each request.
-    std::function<RESPONSE(REQUEST)> mRun;
+    std::function<RESPONSE(REQUEST const &)> mRun;
     // Threads in the pool.
     std::vector<std::unique_ptr<std::thread>> mThreads;
     // Requests, or (if optional has no data), threads should terminate.
@@ -43,7 +44,7 @@ class Executor {
     }
 
 public:
-    Executor(int threadCount, std::function<RESPONSE(REQUEST)> run): mRun(run) {
+    Executor(int threadCount, std::function<RESPONSE(REQUEST const &)> run): mRun(run) {
         for (int i = 0; i < threadCount; i++) {
             mThreads.emplace_back(std::make_unique<std::thread>(&Executor::loop, this));
         }
@@ -66,17 +67,21 @@ public:
         }
     }
 
+    // Can't copy.
+    Executor(const Executor &) = delete;
+    Executor &operator=(const Executor &) = delete;
+
     /**
      * Submit the request for processing.
      */
-    void ask(REQUEST request) {
+    void ask(REQUEST const &request) {
         mRequestQueue.enqueue(std::make_optional(request));
     }
 
     /**
-     * Get any available response, if any.
+     * Get a response, if any.
      */
     std::optional<RESPONSE> get() {
-        return mResponseQueue.try_dequeue2();
+        return mResponseQueue.try_dequeue();
     }
 };

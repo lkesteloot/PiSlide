@@ -51,7 +51,8 @@ struct Photo {
      * In-memory use only, not stored in database. Refers to the preferred photo file to
      * show for this photo.
      */
-    std::string pathname;
+    std::string pathname; // Relative to root path.
+    std::string absolutePathname;
 };
 
 /**
