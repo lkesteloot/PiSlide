@@ -8,3 +8,4 @@ constexpr bool QUICK_SPEED = true;
 constexpr float SLIDE_DISPLAY_S = QUICK_SPEED ? 5 : 14;
 constexpr float SLIDE_TRANSITION_S = 2;
 
+constexpr double MAX_PAUSE_SECONDS = 60*60;

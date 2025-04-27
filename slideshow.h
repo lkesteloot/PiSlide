@@ -7,6 +7,9 @@
 #include "slide.h"
 #include "slidecache.h"
 
+/**
+ * Runs the whole slideshow (animates and draws slides, handles user input, ...).
+ */
 class Slideshow {
     std::vector<Photo> const &mDbPhotos;
     int mScreenWidth;
@@ -16,6 +19,8 @@ class Slideshow {
     double mPreviousFrameTime = 0;
     double mTime = 0;
     bool mPaused = false;
+    double mPauseStartTime = 0;
+    bool mQuit = false;
 
     /**
      * Information about the slides we're showing now.
@@ -42,6 +47,9 @@ class Slideshow {
     // Get the photo by its index, where index can go on indefinitely.
     Photo photoByIndex(int index) const;
 
+    void jumpRelative(int deltaPhoto);
+    void togglePause();
+
 public:
     Slideshow(std::vector<Photo> const &dbPhotos,
             int screenWidth,
@@ -51,7 +59,11 @@ public:
         mScreenWidth(screenWidth),
         mScreenHeight(screenHeight),
         mDatabase(database),
-        mSlideCache(screenWidth, screenHeight) {}
+        mSlideCache(screenWidth, screenHeight) {
+
+        // We'll handle this.
+        SetExitKey(0);
+    }
     virtual ~Slideshow() {}
 
     // Can't copy.
@@ -61,5 +73,6 @@ public:
     bool loopRunning() const;
     void move();
     void draw();
+    void handleKeyboard();
 };
 

@@ -28,7 +28,7 @@
 #include "slidecache.h"
 
 namespace {
-    constexpr int MAX_NO_FILE_WARNINGS = 10;
+    constexpr int MAX_FILE_WARNING_COUNT = 10;
 
     /**
      * Directories to skip altogether.
@@ -172,7 +172,7 @@ std::vector<Photo> assignPhotoPathnames(Database const &database,
         if (!found) {
             // Can't find any file on disk for this photo.
             warningCount += 1;
-            if (warningCount <= MAX_NO_FILE_WARNINGS) {
+            if (warningCount <= MAX_FILE_WARNING_COUNT) {
                 std::cout << "No file on disk for " << photo.hashBack << " (" << photo.label << ")" << std::endl;
             }
         }
@@ -271,48 +271,8 @@ int main_can_throw() {
         // slideshow.prefetch(MAX_CACHE_SIZE/2 + 1);
         slideshow.move();
         // slideshow.fetch_twilio_photos();
-
-
         slideshow.draw();
-
-        /*
-        key = keyboard.read()
-        if key != -1:
-            took_key = slideshow.take_key(key)
-            if not took_key:
-                if key == ord("Q"):
-                    slideshow.shutdown()
-                    keyboard.close()
-                    display.stop()
-                elif key == ord("r"):
-                    slideshow.rotate_clockwise()
-                elif key == ord("l"):
-                    slideshow.rotate_counterclockwise()
-                elif key == ord(" "):
-                    slideshow.toggle_pause()
-                elif key == 261: # Right arrow.
-                    slideshow.jump_relative(1)
-                elif key == 260: # Left arrow.
-                    slideshow.jump_relative(-1)
-                elif key == ord("D"):
-                    slideshow.toggle_debug()
-                elif key == ord("m"):
-                    slideshow.mute()
-                elif key == ord("s"):
-                    slideshow.stop_music()
-                elif key == ord("e"):
-                    slideshow.prompt_email()
-                elif key == ord("b"):
-                    slideshow.toggle_bus()
-                elif key == ord("T"):
-                    slideshow.toggle_twilio()
-                elif key >= ord("1") and key <= ord("5"):
-                    slideshow.rate_photo(key - ord("1") + 1)
-                elif key >= FIRST_FUNCTION_KEY and key < FIRST_FUNCTION_KEY + 10:
-                    slideshow.play_radio_station(key - FIRST_FUNCTION_KEY)
-                else:
-                    LOGGER.info("Got unknown key %d" % key)
-                    */
+        slideshow.handleKeyboard();
     }
 
     CloseWindow();

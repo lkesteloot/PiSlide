@@ -1,12 +1,10 @@
 
-#include <iostream>
 #include <functional>
 
 #include "imageloader.h"
 
 // Unload and delete the image.
 void deleteImage(Image *image) {
-    std::cout << "deleteImage" << std::endl;
     UnloadImage(*image);
     delete image;
 }
@@ -37,8 +35,6 @@ std::vector<std::pair<Photo,std::shared_ptr<Image>>> ImageLoader::getImages() {
 }
 
 ImageLoader::Response ImageLoader::loadPhotoInThread(ImageLoader::Request const &request) {
-    std::cout << "loadPhotoInThread " << request.photo.absolutePathname << std::endl;
-
     Image image = LoadImage(request.photo.absolutePathname.c_str());
 
     // Move the Image object to the heap.

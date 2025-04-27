@@ -8,7 +8,7 @@
 #include "constants.h"
 
 bool Slideshow::loopRunning() const {
-    return !WindowShouldClose();
+    return !WindowShouldClose() && !mQuit;
 }
 
 void Slideshow::move() {
@@ -17,19 +17,20 @@ void Slideshow::move() {
     double deltaTime = mPreviousFrameTime == 0 ? 0 : frameTime - mPreviousFrameTime;
     mPreviousFrameTime = frameTime;
 
-    /*
     // Auto-disable paused after a while.
-    if self.paused && self.pause_start_time is not None && time.time() - self.pause_start_time >= MAX_PAUSE_SECONDS:
-        self.paused = False
-        self.pause_start_time = None
+    if (mPaused && mPauseStartTime != 0 && now() - mPauseStartTime >= MAX_PAUSE_SECONDS) {
+        mPaused = false;
+        mPauseStartTime = 0;
+    }
 
+    /*
     // Auto-disable bus after a while.
     if self.showing_bus && self.bus_start_time is not None && time.time() - self.bus_start_time >= MAX_BUS_SECONDS:
-        self.set_show_bus(False)
+        self.set_show_bus(false)
 
     // Auto-disable Twilio after a while.
     if self.fetching_twilio && self.twilio_start_time is not None && time.time() - self.twilio_start_time >= MAX_TWILIO_SECONDS:
-        self.set_fetch_twilio(False)
+        self.set_fetch_twilio(false)
     */
 
     // Advance time if not paused.
@@ -76,9 +77,9 @@ void Slideshow::draw() {
     /*
     if self.prompting_email:
         self.draw_email_prompt()
-    elif self.show_debug:
+        } else if (self.show_debug:
         self.draw_debug()
-    elif self.showing_bus:
+        } else if (self.showing_bus:
         self.draw_bus()
 
     // Upper-right:
@@ -127,3 +128,105 @@ int Slideshow::getCurrentPhotoIndex() const {
 Photo Slideshow::photoByIndex(int index) const {
     return mDbPhotos.at(modulo(index, mDbPhotos.size()));
 }
+
+void Slideshow::handleKeyboard() {
+    // Unicode code point.
+    int ch = GetCharPressed();
+    if (ch != KEY_NULL) {
+        std::cout << "Got char " << ch << std::endl;
+        /*
+        if self.prompting_email:
+            if ch == 27: # ESC
+                self.prompting_email = false
+                self.paused = false
+                self.mPauseStartTime = None
+                } else if (ch == 8 or ch == 263:
+                if len(self.email_address) > 0:
+                    self.email_address = self.email_address[:-1]
+                    self.update_suggested_emails()
+                    } else if (ch == 9:
+                if len(self.suggested_emails) == 1:
+                    self.complete_email(0)
+                    } else if (ch == 10 or ch == 13:
+                self.email_address = self.email_address.strip()
+                if self.email_address:
+                    # Submit email address.
+                    success = self.email_photo(self.email_address)
+                else:
+                    success = true
+                if success:
+                    self.prompting_email = false
+                    self.paused = false
+                    self.mPauseStartTime = None
+                else:
+                    self.email_error = true
+                    } else if (ch >= 32 and ch < 128:
+                self.email_address += chr(ch)
+                self.update_suggested_emails()
+                } else if (ch >= FIRST_FUNCTION_KEY and ch < FIRST_FUNCTION_KEY + MAX_SUGGESTED_EMAILS:
+                index = ch - FIRST_FUNCTION_KEY
+                if index < len(self.suggested_emails):
+                    self.complete_email(index)
+                    } else if (ch == FIRST_FUNCTION_KEY + 12 - 1:
+                self.email_from = (self.email_from + 1) % len(config.EMAIL_FROM)
+            else:
+                # Ignore ch.
+                LOGGER.info("Unknown key during email entry: " + str(ch))
+            return true
+        else:
+            return false
+            */
+
+        if (ch == 'Q') {
+            mQuit = true;
+        } else if (ch == 'r') {
+            // slideshow.rotate_clockwise()
+        } else if (ch == 'l') {
+            // slideshow.rotate_counterclockwise()
+        } else if (ch == ' ') {
+            togglePause();
+        } else if (ch == 'D') {
+            // slideshow.toggle_debug()
+        } else if (ch == 'm') {
+            // slideshow.mute()
+        } else if (ch == 's') {
+            // slideshow.stop_music()
+        } else if (ch == 'e') {
+            // slideshow.prompt_email()
+        } else if (ch == 'b') {
+            // slideshow.toggle_bus()
+        } else if (ch == 'T') {
+            // slideshow.toggle_twilio()
+        } else if (ch >= '1' and ch <= '5') {
+            // slideshow.rate_photo(ch - '1' + 1)
+        } else {
+            std::cout << "Got unknown char " << ch << std::endl;
+        }
+    }
+
+    // Non-character keys.
+    int key = GetKeyPressed();
+    if (key != 0) {
+        std::cout << "Got key " << key << std::endl;
+        if (key == KEY_LEFT) {
+            jumpRelative(-1);
+        } else if (key == KEY_RIGHT) {
+            jumpRelative(1);
+        } else if (key >= KEY_F1 and key <= KEY_F12) {
+            // slideshow.play_radio_station(key - KEY_F1);
+        } else {
+            std::cout << "Got unknown key " << key << std::endl;
+        }
+    }
+}
+
+void Slideshow::jumpRelative(int deltaSlide) {
+    auto cs = getCurrentSlides();
+    mTime = std::max(0.0, mTime + deltaSlide*SLIDE_DISPLAY_S - cs.currentTimeOffset);
+}
+
+void Slideshow::togglePause() {
+    mPaused = !mPaused;
+    mPauseStartTime = mPaused ? now() : 0;
+}
+
