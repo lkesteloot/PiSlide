@@ -1,5 +1,6 @@
 
 #include <cmath>
+#include <ctime>
 
 #include "raylib.h"
 
@@ -86,7 +87,8 @@ void Slideshow::draw() {
     self.draw_time()
     self.draw_sonos()
     */
-    DrawFPS(10, 10);
+    drawTime();
+    DrawFPS(DISPLAY_MARGIN, DISPLAY_MARGIN);
     EndDrawing();
 }
 
@@ -230,3 +232,14 @@ void Slideshow::togglePause() {
     mPauseStartTime = mPaused ? now() : 0;
 }
 
+void Slideshow::drawTime() {
+    // All-C API because the C++ stuff is really bad at this.
+    std::time_t now = std::time(nullptr);
+    std::tm localTime = *std::localtime(&now);
+
+    char buffer[6];  // Enough for "h:mm\0" or "hh:mm\0"
+    std::strftime(buffer, sizeof(buffer), "%-I:%M", &localTime);
+
+    mTextWriter.write(buffer, Vector2 { mScreenWidth - DISPLAY_MARGIN, DISPLAY_MARGIN },
+            64, WHITE, TextWriter::Alignment::END, TextWriter::Alignment::START);
+}

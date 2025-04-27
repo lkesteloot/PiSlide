@@ -49,6 +49,10 @@ class Slideshow {
     // Get the photo by its index, where index can go on indefinitely.
     Photo photoByIndex(int index) const;
 
+    // Draw various things.
+    void drawTime();
+
+    // Control the slideshow.
     void jumpRelative(int deltaPhoto);
     void togglePause();
 
