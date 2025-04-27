@@ -242,8 +242,6 @@ int main_can_throw() {
     std::mt19937 gen(rd());
     std::shuffle(dbPhotos.begin(), dbPhotos.end(), gen);
 
-    // return 0;
-
     // SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI | FLAG_FULLSCREEN_MODE);
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
     InitWindow(0, 0, "PiSlide");

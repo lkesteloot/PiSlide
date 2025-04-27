@@ -81,36 +81,19 @@ void Slide::move(bool paused, bool promptingEmail, double time) {
 }
 
 void Slide::draw(TextWriter &textWriter, int screenWidth, int screenHeight) {
-    // self.scale(mActualWidth*mActualZoom, mActualHeight*mActualZoom, 1.0)
+    // Draw the photo.
     float scale = mActualZoom*mActualWidth/mTexture.width;
     float x = (screenWidth - mTexture.width*scale)/2;
     float y = (screenHeight - mTexture.height*scale)/2;
     DrawTextureEx(mTexture, Vector2 { x, y }, 0, scale, Fade(WHITE, mActualAlpha));
 
-    // Draw name.
-
-    /*
-        show_twilio_instructions = config.PARTY_MODE and config.TWILIO_SID
-        label = config.TWILIO_MESSAGE if show_twilio_instructions else self.photo.label
-        self.name_label = pi3d.String(font=TEXT_FONT, string=label,
-                is_3d=False, x=0, y=-360, z=0.05)
-        self.name_label.set_shader(shader)
-
-        display_date = "" if show_twilio_instructions else self.photo.display_date
-        self.date_label = pi3d.String(font=DATE_FONT, string=display_date,
-                is_3d=False, x=0, y=-420, z=0.05)
-        self.date_label.set_shader(shader)
-        */
-
-    if (mShowLabels || true) {
-        // Square the alpha to bias towards transparent, because overlapping text
-        // looks bad and we want more transparency during the cross-fade.
-        Color color = Fade(WHITE, mActualAlpha*mActualAlpha);
-        textWriter.write(mPhoto.label, Vector2 { screenWidth/2.0f, screenHeight - 320.0f },
-                48, color, TextWriter::Alignment::CENTER, TextWriter::Alignment::START);
-        textWriter.write(mPhoto.displayDate, Vector2 { screenWidth/2.0f, screenHeight - 265.0f },
-                32, color, TextWriter::Alignment::CENTER, TextWriter::Alignment::START);
-    }
+    // Square the alpha to bias towards transparent, because overlapping text
+    // looks bad and we want more transparency during the cross-fade.
+    Color color = Fade(WHITE, mActualAlpha*mActualAlpha);
+    textWriter.write(mPhoto.label, Vector2 { screenWidth/2.0f, screenHeight - 320.0f },
+            48, color, TextWriter::Alignment::CENTER, TextWriter::Alignment::START);
+    textWriter.write(mPhoto.displayDate, Vector2 { screenWidth/2.0f, screenHeight - 265.0f },
+            32, color, TextWriter::Alignment::CENTER, TextWriter::Alignment::START);
 
     /*
         if self.photo.rating != 3 {
