@@ -55,20 +55,20 @@ void Slide::move(bool paused, bool promptingEmail, double time) {
     if (paused) {
         idealZoom = 1.0;
         idealAlpha = time >= 0 ? (promptingEmail ? 0.2 : 1.0) : 0.0;
-        // self.show_labels = time >= 0;
+        mShowLabels = time >= 0;
     } else {
         float t = time/SLIDE_DISPLAY_S;
         idealZoom = interpolate(mStartZoom, mEndZoom, mSwapZoom.value_or(false) ? 1 - t : t);
 
         if (time < 0) {
             idealAlpha = std::clamp((time + SLIDE_TRANSITION_S)/SLIDE_TRANSITION_S, 0.0, 1.0);
-            // self.show_labels = false;
+            mShowLabels = false;
         } else if (time < SLIDE_DISPLAY_S - SLIDE_TRANSITION_S) {
             idealAlpha = 1.0;
-            // self.show_labels = true;
+            mShowLabels = true;
         } else {
             idealAlpha = std::clamp((SLIDE_DISPLAY_S - time)/SLIDE_TRANSITION_S, 0.0, 1.0);
-            // self.show_labels = false
+            mShowLabels = false;
         }
     }
 
@@ -80,17 +80,39 @@ void Slide::move(bool paused, bool promptingEmail, double time) {
     touch();
 }
 
-void Slide::draw(int screenWidth, int screenHeight) {
+void Slide::draw(TextWriter &textWriter, int screenWidth, int screenHeight) {
     // self.scale(mActualWidth*mActualZoom, mActualHeight*mActualZoom, 1.0)
     float scale = mActualZoom*mActualWidth/mTexture.width;
     float x = (screenWidth - mTexture.width*scale)/2;
     float y = (screenHeight - mTexture.height*scale)/2;
     DrawTextureEx(mTexture, Vector2 { x, y }, 0, scale, Fade(WHITE, mActualAlpha));
-    /*
-    if self.show_labels {
-        self.name_label.draw()
-        self.date_label.draw()
 
+    // Draw name.
+
+    /*
+        show_twilio_instructions = config.PARTY_MODE and config.TWILIO_SID
+        label = config.TWILIO_MESSAGE if show_twilio_instructions else self.photo.label
+        self.name_label = pi3d.String(font=TEXT_FONT, string=label,
+                is_3d=False, x=0, y=-360, z=0.05)
+        self.name_label.set_shader(shader)
+
+        display_date = "" if show_twilio_instructions else self.photo.display_date
+        self.date_label = pi3d.String(font=DATE_FONT, string=display_date,
+                is_3d=False, x=0, y=-420, z=0.05)
+        self.date_label.set_shader(shader)
+        */
+
+    if (mShowLabels || true) {
+        // Square the alpha to bias towards transparent, because overlapping text
+        // looks bad and we want more transparency during the cross-fade.
+        Color color = Fade(WHITE, mActualAlpha*mActualAlpha);
+        textWriter.write(mPhoto.label, Vector2 { screenWidth/2.0f, screenHeight - 320.0f },
+                48, color, TextWriter::Alignment::CENTER, TextWriter::Alignment::START);
+        textWriter.write(mPhoto.displayDate, Vector2 { screenWidth/2.0f, screenHeight - 265.0f },
+                32, color, TextWriter::Alignment::CENTER, TextWriter::Alignment::START);
+    }
+
+    /*
         if self.photo.rating != 3 {
             for i in range(self.photo.rating) {
                 self.star_sprite.scale(STAR_SCALE, STAR_SCALE, 1)

@@ -3,10 +3,12 @@
 
 #include "imageloader.h"
 
-// Unload and delete the image.
-void deleteImage(Image *image) {
-    UnloadImage(*image);
-    delete image;
+namespace {
+    // Unload and delete the image.
+    void deleteImage(Image *image) {
+        UnloadImage(*image);
+        delete image;
+    }
 }
 
 ImageLoader::ImageLoader()

@@ -59,10 +59,10 @@ void Slideshow::draw() {
     // been positioned. Skip drawing in case the bad positioning
     // causes problems (despite zero alpha).
     if (cs.currentSlide && !cs.currentSlide->isBroken() && cs.currentSlide->configured()) {
-        cs.currentSlide->draw(mScreenWidth, mScreenHeight);
+        cs.currentSlide->draw(mTextWriter, mScreenWidth, mScreenHeight);
     }
     if (cs.nextSlide && !cs.nextSlide->isBroken() && cs.nextSlide->configured()) {
-        cs.nextSlide->draw(mScreenWidth, mScreenHeight);
+        cs.nextSlide->draw(mTextWriter, mScreenWidth, mScreenHeight);
     }
 
     // Any slide we didn't draw we should mark as not configured so that
@@ -133,7 +133,7 @@ void Slideshow::handleKeyboard() {
     // Unicode code point.
     int ch = GetCharPressed();
     if (ch != KEY_NULL) {
-        std::cout << "Got char " << ch << std::endl;
+        std::cout << "Got char " << ch << std::endl; // TODO remove
         /*
         if self.prompting_email:
             if ch == 27: # ESC
@@ -200,14 +200,14 @@ void Slideshow::handleKeyboard() {
         } else if (ch >= '1' and ch <= '5') {
             // slideshow.rate_photo(ch - '1' + 1)
         } else {
-            std::cout << "Got unknown char " << ch << std::endl;
+            std::cout << "Got unknown char " << ch << std::endl; // TODO remove
         }
     }
 
     // Non-character keys.
     int key = GetKeyPressed();
     if (key != 0) {
-        std::cout << "Got key " << key << std::endl;
+        std::cout << "Got key " << key << std::endl; // TODO remove
         if (key == KEY_LEFT) {
             jumpRelative(-1);
         } else if (key == KEY_RIGHT) {
@@ -215,7 +215,7 @@ void Slideshow::handleKeyboard() {
         } else if (key >= KEY_F1 and key <= KEY_F12) {
             // slideshow.play_radio_station(key - KEY_F1);
         } else {
-            std::cout << "Got unknown key " << key << std::endl;
+            std::cout << "Got unknown key " << key << std::endl; // TODO remove
         }
     }
 }

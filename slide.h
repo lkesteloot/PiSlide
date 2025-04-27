@@ -7,6 +7,7 @@
 #include "raylib.h"
 
 #include "database.h"
+#include "textwriter.h"
 
 /**
  * A displayed slide.
@@ -37,6 +38,9 @@ class Slide {
 
     // When we were last used (drawn, moved, requested).
     double mLastUsed = 0;
+
+    // Whether to draw the slide's label.
+    bool mShowLabels = false;
 
 public:
     Slide(Photo const &photo, Texture texture) : mPhoto(photo), mTexture(texture) {}
@@ -86,7 +90,7 @@ public:
     /**
      * Draw the slide, its labels, and the star rating.
      */
-    void draw(int screenWidth, int screenHeight);
+    void draw(TextWriter &textWriter, int screenWidth, int screenHeight);
 
     /**
      * Pretend we've not been drawn so that the next draw will start from scratch.

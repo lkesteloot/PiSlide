@@ -6,6 +6,7 @@
 #include "database.h"
 #include "slide.h"
 #include "slidecache.h"
+#include "textwriter.h"
 
 /**
  * Runs the whole slideshow (animates and draws slides, handles user input, ...).
@@ -16,6 +17,7 @@ class Slideshow {
     int mScreenHeight;
     Database const &mDatabase;
     SlideCache mSlideCache;
+    TextWriter mTextWriter;
     double mPreviousFrameTime = 0;
     double mTime = 0;
     bool mPaused = false;
