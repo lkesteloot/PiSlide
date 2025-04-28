@@ -80,8 +80,7 @@ std::vector<Photo> Database::getAllPhotos() const {
                 stmt->getInt(3),
                 stmt->getLong(4),
                 stmt->getString(5),
-                stmt->getString(6),
-                stmt->getString(7));
+                stmt->getString(6));
     }
 
     return photos;
@@ -99,4 +98,21 @@ std::vector<PhotoFile> Database::getAllPhotoFiles() const {
     }
 
     return photoFiles;
+}
+
+void Database::savePhoto(Photo const &photo) const {
+    auto stmt = prepare(std::string("INSERT OR REPLACE INTO photo (") + PHOTO_FIELDS + ") VALUES (?, ?, ?, ?, ?, ?, ?)");
+
+    stmt->bindInt(1, photo.id);
+    stmt->bindString(2, photo.hashBack);
+    stmt->bindInt(3, photo.rotation);
+    stmt->bindInt(4, photo.rating);
+    stmt->bindLong(5, photo.date);
+    stmt->bindString(6, photo.displayDate);
+    stmt->bindString(7, photo.label);
+
+    auto error = stmt->step();
+    if (error) {
+        throw std::invalid_argument("can't execute statement");
+    }
 }

@@ -56,6 +56,9 @@ class Slideshow {
     void jumpRelative(int deltaPhoto);
     void togglePause();
 
+    // Modify the slide.
+    void rotate(int degrees);
+
 public:
     Slideshow(std::vector<Photo> const &dbPhotos,
             int screenWidth,

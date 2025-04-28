@@ -182,9 +182,9 @@ void Slideshow::handleKeyboard() {
         if (ch == 'Q') {
             mQuit = true;
         } else if (ch == 'r') {
-            // slideshow.rotate_clockwise()
+            rotate(-90);
         } else if (ch == 'l') {
-            // slideshow.rotate_counterclockwise()
+            rotate(90);
         } else if (ch == ' ') {
             togglePause();
         } else if (ch == 'D') {
@@ -242,4 +242,17 @@ void Slideshow::drawTime() {
 
     mTextWriter.write(buffer, Vector2 { mScreenWidth - DISPLAY_MARGIN, DISPLAY_MARGIN },
             64, WHITE, TextWriter::Alignment::END, TextWriter::Alignment::START);
+}
+
+void Slideshow::rotate(int degrees) {
+    auto cs = getCurrentSlides();
+
+    if (cs.currentSlide && !cs.currentSlide->isBroken()) {
+        auto slide = cs.currentSlide;
+
+        slide->photo().rotation += degrees;
+        slide->persistState(mDatabase);
+        slide->computeIdealSize(mScreenWidth, mScreenHeight);
+        jumpRelative(0);
+    }
 }

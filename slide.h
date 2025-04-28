@@ -71,7 +71,14 @@ public:
      * Save our own state to the database.
      */
     void persistState(Database const &database) {
-        // database.savePhoto(mPhoto);
+        database.savePhoto(mPhoto);
+    }
+
+    /**
+     * Get the photo, which can be mutated in-place.
+     */
+    Photo &photo() {
+        return mPhoto;
     }
 
     /**

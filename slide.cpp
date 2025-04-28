@@ -83,9 +83,17 @@ void Slide::move(bool paused, bool promptingEmail, double time) {
 void Slide::draw(TextWriter &textWriter, int screenWidth, int screenHeight) {
     // Draw the photo.
     float scale = mActualZoom*mActualWidth/mTexture.width;
-    float x = (screenWidth - mTexture.width*scale)/2;
-    float y = (screenHeight - mTexture.height*scale)/2;
-    DrawTextureEx(mTexture, Vector2 { x, y }, 0, scale, Fade(WHITE, mActualAlpha));
+    // Negate angle to be compatible with Python version and data in database:
+    float angle = -mActualRotate;
+    float s = sin(angle*DEG2RAD);
+    float c = cos(angle*DEG2RAD);
+    float screenCenterX = screenWidth/2;
+    float screenCenterY = screenHeight/2;
+    float photoCenterX = mTexture.width*scale/2;
+    float photoCenterY = mTexture.height*scale/2;
+    float x = screenCenterX - (photoCenterX*c - photoCenterY*s);
+    float y = screenCenterY - (photoCenterX*s + photoCenterY*c);
+    DrawTextureEx(mTexture, Vector2 { x, y }, angle, scale, Fade(WHITE, mActualAlpha));
 
     // Square the alpha to bias towards transparent, because overlapping text
     // looks bad and we want more transparency during the cross-fade.

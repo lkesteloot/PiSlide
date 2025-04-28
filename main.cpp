@@ -272,7 +272,6 @@ int mainCanThrow(int argc, char *argv[]) {
 
     Slideshow slideshow(dbPhotos, screenWidth, screenHeight, database);
 
-    double startTime = now();
     while (slideshow.loopRunning()) {
         // slideshow.prefetch(MAX_CACHE_SIZE/2 + 1);
         slideshow.move();
