@@ -26,6 +26,7 @@
 #include "executor.h"
 #include "util.h"
 #include "slidecache.h"
+#include "config.h"
 
 namespace {
     constexpr int MAX_FILE_WARNING_COUNT = 10;
@@ -137,7 +138,7 @@ std::set<std::string> traverseDirectoryTree(std::string const &rootDir) {
  * invalid photos (those with no disk files) removed.
  */
 std::vector<Photo> assignPhotoPathnames(Database const &database,
-        std::string const &rootPath,
+        Config const &config,
         std::vector<Photo> const &dbPhotos,
         std::set<std::string> const &diskPathnames) {
 
@@ -163,7 +164,7 @@ std::vector<Photo> assignPhotoPathnames(Database const &database,
             if (diskPathnames.contains(photoFile->second->pathname)) {
                 Photo newPhoto = photo;
                 newPhoto.pathname = photoFile->second->pathname;
-                newPhoto.absolutePathname = rootPath + "/" + newPhoto.pathname;
+                newPhoto.absolutePathname = config.rootDir + "/" + newPhoto.pathname;
                 goodPhotos.push_back(newPhoto);
                 found = true;
                 break;
@@ -189,21 +190,28 @@ std::vector<Photo> assignPhotoPathnames(Database const &database,
  * Like main(), but is allowed to throw, and the exception will be displayed
  * nicely to the user.
  */
-int main_can_throw() {
+int mainCanThrow(int argc, char *argv[]) {
     Database database;
 
     // Write integers with thousands separators.
     std::cout.imbue(std::locale(""));
 
-    // TODO parse command-line arguments.
-    // TODO parse config file.
-    // std::string rootPath = "/Users/lk/Dropbox/Team Ten Photos/";
-    std::string rootPath = "/Users/lk/tmp/pislide-root";
+    // Get our configuration.
+    Config config;
+    bool success = config.readConfigFile("pislide.toml");
+    if (!success) {
+        return 1;
+    }
+    success = config.parseCommandLine(argc, argv);
+    if (!success || !config.isValid()) {
+        return 1;
+    }
+
+
     // TODO upgrade the schema.
 
     // Recursively read the photo tree from disk.
-    // std::string rootPath = "/Users/lk/Dropbox/Team Ten Photos/Summer of Love";
-    std::set<std::string> diskPathnames = traverseDirectoryTree(rootPath);
+    std::set<std::string> diskPathnames = traverseDirectoryTree(config.rootDir);
     std::cout << "Photos on disk: " << diskPathnames.size() << std::endl;
 
     // TODO optionally resize images.
@@ -224,7 +232,7 @@ int main_can_throw() {
     // print("Photos after date filter: %d" % (len(dbPhotos),))
 
     // Find a pathname for each photo.
-    dbPhotos = assignPhotoPathnames(database, rootPath, dbPhotos, diskPathnames);
+    dbPhotos = assignPhotoPathnames(database, config, dbPhotos, diskPathnames);
 
     // print("Photos after disk filter: %d" % (len(dbPhotos),))
     // dbPhotos = filter_photos_by_substring(dbPhotos, args.includes)
@@ -278,9 +286,9 @@ int main_can_throw() {
     return 0;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     try {
-        return main_can_throw();
+        return mainCanThrow(argc, argv);
     } catch (const std::exception &e) {
         std::cerr << "Caught exception (" << e.what() << ")" << std::endl;
     }

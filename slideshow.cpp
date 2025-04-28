@@ -94,7 +94,7 @@ void Slideshow::draw() {
 
 Slideshow::CurrentSlides Slideshow::getCurrentSlides() {
     int photoIndex = getCurrentPhotoIndex();
-    CurrentSlides currentSlides {
+    CurrentSlides cs {
         .index = photoIndex,
         .currentSlide = std::shared_ptr<Slide>(),
         .currentTimeOffset = 0.0,
@@ -103,24 +103,24 @@ Slideshow::CurrentSlides Slideshow::getCurrentSlides() {
     };
 
     if (mDbPhotos.empty()) {
-        return currentSlides;
+        return cs;
     }
 
-    currentSlides.currentSlide = mSlideCache.get(photoByIndex(photoIndex));
-    if (currentSlides.currentSlide && !currentSlides.currentSlide->swapZoom().has_value()) {
-        currentSlides.currentSlide->setSwapZoom(modulo(photoIndex, 2) == 0);
+    cs.currentSlide = mSlideCache.get(photoByIndex(photoIndex));
+    if (cs.currentSlide && !cs.currentSlide->swapZoom().has_value()) {
+        cs.currentSlide->setSwapZoom(modulo(photoIndex, 2) == 0);
     }
-    currentSlides.currentTimeOffset = mTime - photoIndex*SLIDE_DISPLAY_S;
+    cs.currentTimeOffset = mTime - photoIndex*SLIDE_DISPLAY_S;
 
-    if (currentSlides.currentTimeOffset >= SLIDE_DISPLAY_S - SLIDE_TRANSITION_S) {
-        currentSlides.nextSlide = mSlideCache.get(photoByIndex(photoIndex + 1));
-        if (currentSlides.nextSlide && !currentSlides.nextSlide->swapZoom().has_value()) {
-            currentSlides.nextSlide->setSwapZoom(modulo(photoIndex + 1, 2) == 0);
+    if (cs.currentTimeOffset >= SLIDE_DISPLAY_S - SLIDE_TRANSITION_S) {
+        cs.nextSlide = mSlideCache.get(photoByIndex(photoIndex + 1));
+        if (cs.nextSlide && !cs.nextSlide->swapZoom().has_value()) {
+            cs.nextSlide->setSwapZoom(modulo(photoIndex + 1, 2) == 0);
         }
-        currentSlides.nextTimeOffset = currentSlides.currentTimeOffset - SLIDE_DISPLAY_S;
+        cs.nextTimeOffset = cs.currentTimeOffset - SLIDE_DISPLAY_S;
     }
 
-    return currentSlides;
+    return cs;
 }
 
 int Slideshow::getCurrentPhotoIndex() const {

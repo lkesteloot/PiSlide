@@ -31,6 +31,7 @@ std::vector<std::pair<Photo,std::shared_ptr<Image>>> ImageLoader::getImages() {
         }
 
         images.emplace_back(response->photo, response->image);
+        mAlreadyRequestedIds.erase(response->photo.id);
     }
 
     return images;
