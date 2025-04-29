@@ -57,7 +57,8 @@ class Slideshow {
     void togglePause();
 
     // Modify the slide.
-    void rotate(int degrees);
+    void rotatePhoto(int degrees);
+    void ratePhoto(int rating);
 
 public:
     Slideshow(std::vector<Photo> const &dbPhotos,
@@ -81,7 +82,7 @@ public:
 
     bool loopRunning() const;
     void move();
-    void draw();
+    void draw(Texture const &starTexture);
     void handleKeyboard();
 };
 

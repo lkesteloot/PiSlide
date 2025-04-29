@@ -80,7 +80,7 @@ void Slide::move(bool paused, bool promptingEmail, double time) {
     touch();
 }
 
-void Slide::draw(TextWriter &textWriter, int screenWidth, int screenHeight) {
+void Slide::draw(TextWriter &textWriter, Texture const &starTexture, int screenWidth, int screenHeight) {
     // Draw the photo.
     float scale = mActualZoom*mActualWidth/mTexture.width;
     // Negate angle to be compatible with Python version and data in database:
@@ -103,13 +103,21 @@ void Slide::draw(TextWriter &textWriter, int screenWidth, int screenHeight) {
     textWriter.write(mPhoto.displayDate, Vector2 { screenWidth/2.0f, screenHeight - 265.0f },
             32, color, TextWriter::Alignment::CENTER, TextWriter::Alignment::START);
 
-    /*
-        if self.photo.rating != 3 {
-            for i in range(self.photo.rating) {
-                self.star_sprite.scale(STAR_SCALE, STAR_SCALE, 1)
-                self.star_sprite.position((-(self.photo.rating - 1)/2.0 + i)*STAR_SCALE*1.2 + STAR_OFFSET, -470, 0.05)
-                self.star_sprite.draw()
-                */
+    // Draw the rating stars.
+    int rating = mPhoto.rating;
+    if (rating != 3) {
+        float starScale = STAR_SIZE / starTexture.width;
+        Color starColor = Fade(WHITE, 0.5*mActualAlpha*mActualAlpha);
+
+        for (int i = 0; i < rating; i++) {
+            Vector2 position {
+                .x = screenWidth/2 + (-(rating - 1)/2.0f + i)*STAR_SIZE*1.2f - STAR_SIZE/2.0f,
+                .y = screenHeight - 220.0f,
+            };
+            DrawTextureEx(starTexture, position, 0, starScale, starColor);
+        }
+    }
+
     touch();
 }
 

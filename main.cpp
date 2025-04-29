@@ -259,12 +259,8 @@ namespace {
         std::cout << "Window size: " << screenWidth << "x" << screenHeight << std::endl;
 
         // Load the star icon.
-        /*
-        star_texture = pi3d.Texture("outline-star-256.png", blend=True, mipmap=True)
-        star_sprite = pi3d.ImageSprite(star_texture, shader, camera=camera, w=1.0, h=1.0, z=0.05)
-        star_sprite.set_alpha(0.5)
-        LOGGER.info("Star icon: %dx%d" % (star_texture.ix, star_texture.iy))
-        */
+        Texture starTexture = LoadTexture("outline-star-256.png");
+        GenTextureMipmaps(&starTexture);
 
         // Match Python version FPS.
         SetTargetFPS(40);
@@ -275,7 +271,7 @@ namespace {
             // slideshow.prefetch(MAX_CACHE_SIZE/2 + 1);
             slideshow.move();
             // slideshow.fetch_twilio_photos();
-            slideshow.draw();
+            slideshow.draw(starTexture);
             slideshow.handleKeyboard();
         }
 

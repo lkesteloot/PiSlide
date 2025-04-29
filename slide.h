@@ -97,7 +97,7 @@ public:
     /**
      * Draw the slide, its labels, and the star rating.
      */
-    void draw(TextWriter &textWriter, int screenWidth, int screenHeight);
+    void draw(TextWriter &textWriter, Texture const &starTexture, int screenWidth, int screenHeight);
 
     /**
      * Pretend we've not been drawn so that the next draw will start from scratch.

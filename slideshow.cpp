@@ -48,7 +48,7 @@ void Slideshow::move() {
     }
 }
 
-void Slideshow::draw() {
+void Slideshow::draw(Texture const &starTexture) {
     auto cs = getCurrentSlides();
 
     BeginDrawing();
@@ -60,10 +60,10 @@ void Slideshow::draw() {
     // been positioned. Skip drawing in case the bad positioning
     // causes problems (despite zero alpha).
     if (cs.currentSlide && !cs.currentSlide->isBroken() && cs.currentSlide->configured()) {
-        cs.currentSlide->draw(mTextWriter, mScreenWidth, mScreenHeight);
+        cs.currentSlide->draw(mTextWriter, starTexture, mScreenWidth, mScreenHeight);
     }
     if (cs.nextSlide && !cs.nextSlide->isBroken() && cs.nextSlide->configured()) {
-        cs.nextSlide->draw(mTextWriter, mScreenWidth, mScreenHeight);
+        cs.nextSlide->draw(mTextWriter, starTexture, mScreenWidth, mScreenHeight);
     }
 
     // Any slide we didn't draw we should mark as not configured so that
@@ -182,9 +182,9 @@ void Slideshow::handleKeyboard() {
         if (ch == 'Q') {
             mQuit = true;
         } else if (ch == 'r') {
-            rotate(-90);
+            rotatePhoto(-90);
         } else if (ch == 'l') {
-            rotate(90);
+            rotatePhoto(90);
         } else if (ch == ' ') {
             togglePause();
         } else if (ch == 'D') {
@@ -200,7 +200,7 @@ void Slideshow::handleKeyboard() {
         } else if (ch == 'T') {
             // slideshow.toggle_twilio()
         } else if (ch >= '1' and ch <= '5') {
-            // slideshow.rate_photo(ch - '1' + 1)
+            ratePhoto(ch - '1' + 1);
         } else {
             std::cout << "Got unknown char " << ch << std::endl; // TODO remove
         }
@@ -244,7 +244,7 @@ void Slideshow::drawTime() {
             64, WHITE, TextWriter::Alignment::END, TextWriter::Alignment::START);
 }
 
-void Slideshow::rotate(int degrees) {
+void Slideshow::rotatePhoto(int degrees) {
     auto cs = getCurrentSlides();
 
     if (cs.currentSlide && !cs.currentSlide->isBroken()) {
@@ -254,5 +254,16 @@ void Slideshow::rotate(int degrees) {
         slide->persistState(mDatabase);
         slide->computeIdealSize(mScreenWidth, mScreenHeight);
         jumpRelative(0);
+    }
+}
+
+void Slideshow::ratePhoto(int rating) {
+    auto cs = getCurrentSlides();
+
+    if (cs.currentSlide && !cs.currentSlide->isBroken()) {
+        auto slide = cs.currentSlide;
+
+        slide->photo().rating = rating;
+        slide->persistState(mDatabase);
     }
 }
