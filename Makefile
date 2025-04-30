@@ -21,8 +21,11 @@ endif
 all: run
 
 .PHONY: run
-run: $(APP)
+run: build
 	$(RUN_PREFIX) ./$(APP) --root-dir "$(ROOT_DIR)"
+
+.PHONY: build
+build: $(APP)
 
 $(APP): $(SRC) $(HEADERS) Makefile
 	$(CXX) $(CXXFLAGS) $(SRC) $(LIBS) -o $(APP)
