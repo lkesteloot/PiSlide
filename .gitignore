@@ -6,3 +6,4 @@ resources
 /pislide
 .python-version
 *.dSYM
+.idea

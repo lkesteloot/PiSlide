@@ -17,6 +17,9 @@ ifeq ($(HOSTTYPE), Darwin-arm64)
 	LIBS += -framework OpenGL -framework Cocoa -framework IOKit -framework CoreFoundation -framework CoreAudio -framework CoreVideo -framework AudioToolbox
 endif
 
+.PHONY: all
+all: run
+
 .PHONY: run
 run: $(APP)
 	$(RUN_PREFIX) ./$(APP) --root-dir "$(ROOT_DIR)"

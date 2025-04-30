@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <optional>
+#include <utility>
 
 #include "raylib.h"
 
@@ -12,7 +13,7 @@
 /**
  * A displayed slide.
  */
-class Slide {
+class Slide final {
     Photo mPhoto;
     Texture mTexture; // We own this.
     bool mIsBroken = false;
@@ -43,8 +44,8 @@ class Slide {
     bool mShowLabels = false;
 
 public:
-    Slide(Photo const &photo, Texture texture) : mPhoto(photo), mTexture(texture) {}
-    virtual ~Slide() {
+    Slide(Photo photo, const Texture &texture) : mPhoto(std::move(photo)), mTexture(texture) {}
+    ~Slide() {
         UnloadTexture(mTexture);
     }
 
@@ -70,7 +71,7 @@ public:
     /**
      * Save our own state to the database.
      */
-    void persistState(Database const &database) {
+    void persistState(Database const &database) const {
         database.savePhoto(mPhoto);
     }
 

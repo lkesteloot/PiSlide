@@ -7,13 +7,15 @@
 
 #include "raylib.h"
 
-class TextWriter {
+/**
+ * Writes text to the screen, loading and caching fonts of the right size.
+ */
+class TextWriter final {
     // Font size to font.
     std::map<float,std::shared_ptr<Font>> mFontCache;
 
 public:
-    TextWriter() {}
-    virtual ~TextWriter() {}
+    TextWriter() = default;
 
     // Can't copy.
     TextWriter(const TextWriter &) = delete;
@@ -30,10 +32,13 @@ public:
         END,
     };
 
+    /**
+     * Write the text at the given position, size, color, and alignment.
+     */
     void write(std::string const &text,
-            Vector2 position,
-            float fontSize,
-            Color color,
-            Alignment horizontal,
-            Alignment vertical);
+               Vector2 position,
+               float fontSize,
+               Color color,
+               Alignment horizontal,
+               Alignment vertical);
 };

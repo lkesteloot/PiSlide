@@ -1,7 +1,4 @@
 
-#include <cmath>
-#include <ctime>
-
 #include "raylib.h"
 
 #include "slideshow.h"

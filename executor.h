@@ -12,7 +12,7 @@
  * Passes tasks to a set of threads and makes the results available.
  */
 template <typename REQUEST, typename RESPONSE>
-class Executor {
+class Executor final {
     // The function to call for each request.
     std::function<RESPONSE(REQUEST const &)> mRun;
     // Threads in the pool.
@@ -44,13 +44,13 @@ class Executor {
     }
 
 public:
-    Executor(int threadCount, std::function<RESPONSE(REQUEST const &)> run): mRun(run) {
+    Executor(int threadCount, std::function<RESPONSE(REQUEST const &)> run): mRun(std::move(run)) {
         for (int i = 0; i < threadCount; i++) {
             mThreads.emplace_back(std::make_unique<std::thread>(&Executor::loop, this));
         }
     }
 
-    virtual ~Executor() {
+    ~Executor() {
         // This "clear" assumes that the task has no permanent value (e.g., modifying
         // database, saving a file, sending an email). Might want to have a flag for
         // whether to do this.

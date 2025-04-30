@@ -11,7 +11,7 @@
 /**
  * Runs the whole slideshow (animates and draws slides, handles user input, ...).
  */
-class Slideshow {
+class Slideshow final {
     std::vector<Photo> const &mDbPhotos;
     int mScreenWidth;
     int mScreenHeight;
@@ -74,7 +74,6 @@ public:
         // We'll handle this.
         SetExitKey(0);
     }
-    virtual ~Slideshow() {}
 
     // Can't copy.
     Slideshow(const Slideshow &) = delete;

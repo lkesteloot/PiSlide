@@ -15,7 +15,7 @@
 /**
  * Asynchronously loads photos, creating Image objects.
  */
-class ImageLoader {
+class ImageLoader final {
     // Request sent to the executor's thread.
     struct Request {
         Photo photo;
@@ -35,11 +35,10 @@ class ImageLoader {
     Executor<Request,Response> mExecutor;
 
     // Load the photo. Runs in a different thread.
-    Response loadPhotoInThread(Request const &request);
+    static Response loadPhotoInThread(Request const &request);
 
 public:
     ImageLoader();
-    virtual ~ImageLoader() {}
 
     /**
      * Request an asynchronous load of the photo. It's safe to call this

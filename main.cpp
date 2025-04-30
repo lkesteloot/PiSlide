@@ -1,5 +1,4 @@
 
-#include <stdio.h>
 #include <iostream>
 #include <stdexcept>
 #include <algorithm>
@@ -7,7 +6,6 @@
 #include <string>
 #include <vector>
 #include <fts.h>
-#include <sys/stat.h>
 #include <cstring>
 #include <set>
 #include <map>
@@ -24,7 +22,6 @@
 #include "database.h"
 #include "slideshow.h"
 #include "executor.h"
-#include "util.h"
 #include "slidecache.h"
 #include "config.h"
 
@@ -52,7 +49,7 @@ namespace {
     }
 
     /*
-     * Gets a set of all pathnames in image directory. These are relative to the
+     * Gets a set of all pathnames in the image directory. These are relative to the
      * passed-in root dir.
      */
     std::set<std::string> traverseDirectoryTree(std::string const &rootDir) {
@@ -74,7 +71,6 @@ namespace {
         while ((ent = fts_read(ftsp)) != nullptr) {
             switch (ent->fts_info) {
                 case FTS_D: {
-                    // std::cout << "Entering directory: " << ent->fts_path << std::endl;
                     std::string dirname = GetFileName(ent->fts_path);
                     if (UNWANTED_DIRS.contains(dirname)) {
                         fts_set(ftsp, ent, FTS_SKIP);
@@ -84,7 +80,6 @@ namespace {
 
                 case FTS_F:
                 case FTS_NSOK: {
-                    // std::cout << "File: " << ent->fts_path << std::endl;
                     std::string path = ent->fts_path;
                     if (isImagePathname(path)) {
                         // Strip rootDir.
@@ -152,13 +147,13 @@ namespace {
 
         int warningCount = 0;
 
-        // Handle each photo, making new array of photos.
+        // Handle each photo, making a new array of photos.
         std::vector<Photo> goodPhotos;
         for (auto &photo : dbPhotos) {
             // Try every photo file.
             bool found = false;
             auto [begin, end] = photoFileMap.equal_range(photo.hashBack);
-            for (auto photoFile = begin; photoFile != end; photoFile++) {
+            for (auto photoFile = begin; photoFile != end; ++photoFile) {
                 // See if it's on disk.
                 if (diskPathnames.contains(photoFile->second->pathname)) {
                     Photo newPhoto = photo;
@@ -192,7 +187,7 @@ namespace {
     int mainCanThrow(int argc, char *argv[]) {
         Database database;
 
-        // Write integers with thousands separators.
+        // Write integers for humans (commas, etc.).
         std::cout.imbue(std::locale(""));
 
         // Get our configuration.
@@ -209,7 +204,7 @@ namespace {
 
         // TODO upgrade the schema.
 
-        // Recursively read the photo tree from disk.
+        // Recursively read the photo tree from the disk.
         std::set<std::string> diskPathnames = traverseDirectoryTree(config.rootDir);
         std::cout << "Photos on disk: " << diskPathnames.size() << std::endl;
 
@@ -247,7 +242,7 @@ namespace {
         // Shuffle the photos.
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::shuffle(dbPhotos.begin(), dbPhotos.end(), gen);
+        std::ranges::shuffle(dbPhotos, gen);
 
         // SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI | FLAG_FULLSCREEN_MODE);
         SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);

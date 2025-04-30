@@ -54,7 +54,7 @@ void Slide::move(bool paused, bool promptingEmail, double time) {
     float idealZoom, idealAlpha;
     if (paused) {
         idealZoom = 1.0;
-        idealAlpha = time >= 0 ? (promptingEmail ? 0.2 : 1.0) : 0.0;
+        idealAlpha = time >= 0 ? (promptingEmail ? 0.2f : 1.0f) : 0.0f;
         mShowLabels = time >= 0;
     } else {
         float t = time/SLIDE_DISPLAY_S;

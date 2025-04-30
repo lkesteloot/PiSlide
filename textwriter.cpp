@@ -6,7 +6,7 @@ namespace {
     constexpr float SPACING = 0.0f;
 
     // Unload and delete the font object.
-    void deleteFont(Font *font) {
+    void deleteFont(const Font *font) {
         UnloadFont(*font);
         delete font;
     }
@@ -24,8 +24,8 @@ void TextWriter::write(std::string const &text,
     if (mFontCache.contains(fontSize)) {
         font = mFontCache.at(fontSize);
     } else {
-        Font *allocatedFont = new Font;
-        *allocatedFont = LoadFontEx("FreeSans.ttf", fontSize, nullptr, 0);
+        auto allocatedFont = new Font(LoadFontEx("FreeSans.ttf",
+            static_cast<int>(fontSize), nullptr, 0));
         font.reset(allocatedFont, deleteFont);
         mFontCache[fontSize] = font;
     }

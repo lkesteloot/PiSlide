@@ -22,7 +22,7 @@ public:
      */
     void enqueue(T data) {
         {
-            std::lock_guard<std::mutex> lock(mMutex);
+            std::lock_guard lock(mMutex);
             mDataQueue.push(data);
         }
         mConditionVariable.notify_one();
@@ -32,7 +32,7 @@ public:
      * Blocks until the queue has data available, and returns it.
      */
     T dequeue() {
-        std::unique_lock<std::mutex> lock(mMutex);
+        std::unique_lock lock(mMutex);
         while (mDataQueue.empty()) {
             mConditionVariable.wait(lock);
         }
@@ -45,7 +45,7 @@ public:
      * Non-blocking way to dequeue data. Returns whether there was data.
      */
     bool try_dequeue(T& data) {
-        std::lock_guard<std::mutex> lock(mMutex);
+        std::lock_guard lock(mMutex);
         if (mDataQueue.empty()) {
             return false;
         }
@@ -58,7 +58,7 @@ public:
      * Non-blocking way to dequeue data.
      */
     std::optional<T> try_dequeue() {
-        std::lock_guard<std::mutex> lock(mMutex);
+        std::lock_guard lock(mMutex);
         if (mDataQueue.empty()) {
             return std::optional<T>();
         }
@@ -71,15 +71,15 @@ public:
      * Empty the queue.
      */
     void clear() {
-      std::lock_guard<std::mutex> lock(mMutex);
+      std::lock_guard lock(mMutex);
       mDataQueue = {};
     }
 
     /**
      * Whether the queue is empty.
      */
-    bool empty() const {
-      std::lock_guard<std::mutex> lock(mMutex);
+    bool empty() {
+      std::lock_guard lock(mMutex);
       return mDataQueue.empty();
     }
 };

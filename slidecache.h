@@ -1,12 +1,8 @@
 
 #pragma once
 
-#include <cstdint>
-#include <vector>
-#include <utility>
 #include <memory>
 #include <map>
-#include <set>
 
 #include "model.h"
 #include "slide.h"
@@ -16,7 +12,7 @@
  * Cache from photo to slide. Loads slides on demand when a photo is
  * asked for and isn't in the cache.
  */
-class SlideCache {
+class SlideCache final {
     // Map from photo ID to Slide. The pointer is empty if the image
     // failed to load.
     std::map<int32_t,std::shared_ptr<Slide>> mCache;
@@ -40,7 +36,6 @@ class SlideCache {
 public:
     SlideCache(int screenWidth, int screenHeight)
         : mScreenWidth(screenWidth), mScreenHeight(screenHeight) {}
-    virtual ~SlideCache() {}
 
     /**
      * Return immediately with a Slide object if we've loaded this photo,

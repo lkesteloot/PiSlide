@@ -10,14 +10,11 @@
  * - Parameters from the config file.
  * - Parameters from the command line.
  */
-struct Config {
+struct Config final {
     /**
      * Root directory of photo files. Must not end with slash.
      */
     std::string rootDir;
-
-    Config() {}
-    virtual ~Config() {}
 
     /**
      * Loads the config file from disk. Returns whether successful.

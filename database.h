@@ -11,12 +11,12 @@
 /**
  * A prepared SQL statement.
  */
-class PreparedStatement {
+class PreparedStatement final {
     sqlite3_stmt *mStmt;
 
 public:
-    PreparedStatement(sqlite3_stmt *stmt) : mStmt(stmt) {}
-    virtual ~PreparedStatement() {
+    explicit PreparedStatement(sqlite3_stmt *stmt) : mStmt(stmt) {}
+    ~PreparedStatement() {
         sqlite3_finalize(mStmt);
     }
 
@@ -74,14 +74,14 @@ public:
         // have to guarantee that the string is not destroyed before
         // the prepared statement is, and although that's true today,
         // it might not be true some day, and none of this is performance-critical.
-        sqlite3_bind_text(mStmt, pos, value.c_str(), value.size(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(mStmt, pos, value.c_str(), static_cast<int>(value.size()), SQLITE_TRANSIENT);
     }
 };
 
 /**
  * Connection to the database.
  */
-class Database {
+class Database final {
     sqlite3 *mDb;
 
     /**
@@ -91,9 +91,9 @@ class Database {
 
 public:
     Database();
-    virtual ~Database();
+    ~Database();
 
-    // Can't copy, might prematurely close connection.
+    // Can't copy, might prematurely close the connection.
     Database(const Database &) = delete;
     Database &operator=(const Database &) = delete;
 
