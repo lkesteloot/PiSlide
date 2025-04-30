@@ -65,13 +65,9 @@ void Slideshow::draw(Texture const &starTexture) {
         cs.nextSlide->draw(mTextWriter, starTexture, mScreenWidth, mScreenHeight);
     }
 
-    // Any slide we didn't draw we should mark as not configured so that
-    // next time it's drawn it can jump immediately to its initial position.
-    /*
-    for slide in self.slide_cache.get_slides():
-        if slide is not cs.currentSlide && slide is not cs.nextSlide && not slide.isBroken():
-            slide.turn_off()
-            */
+    // Reset any slide we didn't draw so that next time it's drawn it can jump
+    // immediately to its initial position.
+    mSlideCache.resetUnused(cs.currentSlide, cs.nextSlide);
 
     // Upper-left:
     /*

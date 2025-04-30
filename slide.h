@@ -103,7 +103,7 @@ public:
     /**
      * Pretend we've not been drawn so that the next draw will start from scratch.
      */
-    void turnOff() {
+    void reset() {
         mConfigured = false;
         mActualAlpha = 0.0;
     }
@@ -134,10 +134,16 @@ public:
         mSwapZoom = swapZoom;
     }
 
+    /**
+     * Whether this represents a "broken" slide (file couldn't be loaded).
+     */
     bool isBroken() const {
         return mIsBroken;
     }
 
+    /**
+     * Whether we've set up our slide values (alpha, etc.) properly.
+     */
     bool configured() const {
         return mConfigured;
     }

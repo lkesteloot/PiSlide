@@ -104,3 +104,13 @@ void SlideCache::purgeOldest() {
         mCache.erase(oldestPhotoId);
     }
 }
+
+void SlideCache::resetUnused(std::shared_ptr<Slide> currentSlide,
+        std::shared_ptr<Slide> nextSlide) {
+
+    for (auto &[photoId, slide] : mCache) {
+        if (slide != currentSlide && slide != nextSlide && !slide->isBroken()) {
+            slide->reset();
+        }
+    }
+}

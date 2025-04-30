@@ -42,4 +42,9 @@ public:
      * or return an empty pointer and start loading the photo asynchronously.
      */
     std::shared_ptr<Slide> get(Photo const &photo);
+
+    /**
+     * Reset all slides except these (which can be null).
+     */
+    void resetUnused(std::shared_ptr<Slide> currentSlide, std::shared_ptr<Slide> nextSlide);
 };
