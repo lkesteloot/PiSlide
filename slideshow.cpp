@@ -1,4 +1,6 @@
 
+#include <cmath>
+
 #include "raylib.h"
 
 #include "slideshow.h"

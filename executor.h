@@ -57,7 +57,7 @@ public:
         mRequestQueue.clear();
 
         // Enqueue requests to terminate the thread.
-        for (int i = 0; i < mThreads.size(); i++) {
+        for (unsigned int i = 0; i < mThreads.size(); i++) {
             mRequestQueue.enqueue(std::optional<REQUEST>());
         }
 

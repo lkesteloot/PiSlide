@@ -180,6 +180,18 @@ namespace {
         return goodPhotos;
     }
 
+    std::vector<Photo> filterPhotosByPathnameSubstring(std::vector<Photo> const &dbPhotos) {
+        std::vector<Photo> goodPhotos;
+
+        for (auto &photo : dbPhotos) {
+            if (true || photo.pathname.find("Florence") != std::string::npos) {
+                goodPhotos.push_back(photo);
+            }
+        }
+
+        return goodPhotos;
+    }
+
     /**
      * Like main(), but is allowed to throw, and the exception will be displayed
      * nicely to the user.
@@ -229,7 +241,7 @@ namespace {
         dbPhotos = assignPhotoPathnames(database, config, dbPhotos, diskPathnames);
 
         // print("Photos after disk filter: %d" % (len(dbPhotos),))
-        // dbPhotos = filter_photos_by_substring(dbPhotos, args.includes)
+        dbPhotos = filterPhotosByPathnameSubstring(dbPhotos);
         // print("Photos after dir filter: %d" % (len(dbPhotos),))
 
         std::cout << "Final photos to be shown: " << dbPhotos.size() << std::endl;
@@ -256,6 +268,7 @@ namespace {
         // Load the star icon.
         Texture starTexture = LoadTexture("outline-star-256.png");
         GenTextureMipmaps(&starTexture);
+        SetTextureFilter(starTexture, TEXTURE_FILTER_TRILINEAR);
 
         // Match Python version FPS.
         SetTargetFPS(40);

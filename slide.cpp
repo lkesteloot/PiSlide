@@ -1,4 +1,6 @@
 
+#include <cmath>
+
 #include "slide.h"
 #include "util.h"
 #include "constants.h"

@@ -34,6 +34,8 @@ void SlideCache::checkImageLoader() {
 
         Texture texture = LoadTextureFromImage(*image);
         GenTextureMipmaps(&texture);
+        SetTextureFilter(texture, TEXTURE_FILTER_TRILINEAR);
+        SetTextureWrap(texture, TEXTURE_WRAP_CLAMP);
         auto slide = std::make_shared<Slide>(photo, texture);
         slide->computeIdealSize(mScreenWidth, mScreenHeight);
         mCache[photo.id] = slide;
