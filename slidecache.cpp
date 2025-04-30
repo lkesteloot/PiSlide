@@ -32,6 +32,36 @@ void SlideCache::checkImageLoader() {
         //if not slide:
             //slide = BrokenSlide()
 
+        // TODO test this, factor out, move into loading thread.
+        {
+            Image *imagePtr = image.get();
+            constexpr int BORDER = 4;
+            int width = imagePtr->width;
+            int height = imagePtr->height;
+            // Top.
+            for (int y = 0; y < BORDER; y++) {
+                for (int x = 0; x < width; x++) {
+                    ImageDrawPixel(imagePtr, x, y, BLANK);
+                }
+            }
+            // Bottom.
+            for (int y = height - BORDER; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    ImageDrawPixel(imagePtr, x, y, BLANK);
+                }
+            }
+            for (int y = 0; y < height; y++) {
+                // Left.
+                for (int x = 0; x < BORDER; x++) {
+                    ImageDrawPixel(imagePtr, x, y, BLANK);
+                }
+                // Right.
+                for (int x = width - BORDER; x < width; x++) {
+                    ImageDrawPixel(imagePtr, x, y, BLANK);
+                }
+            }
+        }
+
         Texture texture = LoadTextureFromImage(*image);
         GenTextureMipmaps(&texture);
         SetTextureFilter(texture, TEXTURE_FILTER_TRILINEAR);
