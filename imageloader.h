@@ -3,7 +3,6 @@
 
 #include <cstdint>
 #include <vector>
-#include <utility>
 #include <memory>
 #include <set>
 
@@ -11,6 +10,16 @@
 
 #include "model.h"
 #include "executor.h"
+#include "util.h"
+
+/**
+ * Information about an image that was loaded.
+ */
+struct LoadedImage {
+    Photo photo;
+    std::shared_ptr<Image> image;
+    Timing loadTime;
+};
 
 /**
  * Asynchronously loads photos, creating Image objects.
@@ -25,6 +34,7 @@ class ImageLoader final {
     struct Response {
         Photo photo;
         std::shared_ptr<Image> image;
+        Timing loadTime;
     };
 
     // Set of photo IDs that are either in the request queue or
@@ -50,5 +60,5 @@ public:
      * Fetch the images that have been loaded. The shared pointer is
      * empty if the image failed to load.
      */
-    std::vector<std::pair<Photo,std::shared_ptr<Image>>> getImages();
+    std::vector<LoadedImage> getLoadedImages();
 };

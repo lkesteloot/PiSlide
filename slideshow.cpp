@@ -68,16 +68,18 @@ void Slideshow::draw(Texture const &starTexture) {
     BeginDrawing();
     ClearBackground(BLACK);
 
+    float fade = mDebug ? 0.3f : 1.0f;
+
     // Check configured here because there's a chance that we'll
     // get a loaded slide from the loader between the move and
     // the draw, meaning that the draw will happen before it's
     // been positioned. Skip drawing in case the bad positioning
     // causes problems (despite zero alpha).
     if (cs.currentSlide && !cs.currentSlide->isBroken() && cs.currentSlide->configured()) {
-        cs.currentSlide->draw(mTextWriter, starTexture, mScreenWidth, mScreenHeight);
+        cs.currentSlide->draw(mTextWriter, starTexture, mScreenWidth, mScreenHeight, fade);
     }
     if (cs.nextSlide && !cs.nextSlide->isBroken() && cs.nextSlide->configured()) {
-        cs.nextSlide->draw(mTextWriter, starTexture, mScreenWidth, mScreenHeight);
+        cs.nextSlide->draw(mTextWriter, starTexture, mScreenWidth, mScreenHeight, fade);
     }
 
     // Reset any slide we didn't draw so that next time it's drawn it can jump
@@ -90,7 +92,7 @@ void Slideshow::draw(Texture const &starTexture) {
     }
 
     // Upper-right:
-    drawTime();
+    drawTime(Fade(WHITE, fade));
 
     EndDrawing();
 }
@@ -239,7 +241,7 @@ void Slideshow::toggleDebug() {
     mDebug = !mDebug;
 }
 
-void Slideshow::drawTime() {
+void Slideshow::drawTime(Color color) {
     // All-C API because the C++ stuff is really bad at this.
     std::time_t now = std::time(nullptr);
     std::tm localTime = *std::localtime(&now);
@@ -248,7 +250,7 @@ void Slideshow::drawTime() {
     std::strftime(buffer, sizeof(buffer), "%-I:%M", &localTime);
 
     mTextWriter.write(buffer, Vector2 { mScreenWidth - DISPLAY_MARGIN, DISPLAY_MARGIN },
-            64, WHITE, TextWriter::Alignment::END, TextWriter::Alignment::START);
+            64, color, TextWriter::Alignment::END, TextWriter::Alignment::START);
 }
 
 void Slideshow::drawDebug() {
@@ -259,26 +261,41 @@ void Slideshow::drawDebug() {
     Vector2 pos { DISPLAY_MARGIN, DISPLAY_MARGIN };
 
     // Write FPS.
-    int fps = GetFPS();
-    mTextWriter.write(TextFormat("%i FPS", fps), pos, FONT_SIZE, WHITE,
+    mTextWriter.write(TextFormat("Frames per second: %i", GetFPS()), pos, FONT_SIZE, WHITE,
             TextWriter::Alignment::START, TextWriter::Alignment::START);
-    pos.y += FONT_SIZE*2;
+    pos.y += FONT_SIZE;
+
+    std::stringstream ss;
+    ss.imbue(std::locale(""));
+    ss << "Number of photos: " << mDbPhotos.size();
+    mTextWriter.write(ss.str().c_str(), pos, FONT_SIZE, WHITE,
+            TextWriter::Alignment::START, TextWriter::Alignment::START);
+    pos.y += FONT_SIZE;
+
+    mTextWriter.write(TextFormat("Time: %.1fs", mTime), pos, FONT_SIZE, WHITE,
+            TextWriter::Alignment::START, TextWriter::Alignment::START);
+    pos.y += FONT_SIZE;
+
+    pos.y += FONT_SIZE;
 
     // Write slide info.
     for (int photoIndex = cs.index - 5; photoIndex <= cs.index + 5; photoIndex++) {
         auto photo = photoByIndex(photoIndex);
         auto slide = mSlideCache.get(photo, false);
+        Color color;
         std::stringstream ss;
         ss << photoIndex << ": ";
         if (slide) {
             ss << *slide;
+            color = WHITE;
         } else {
             ss << photo;
+            color = GRAY;
         }
         if (photoIndex == cs.index) {
-            ss << " (current)";
+            color = YELLOW;
         }
-        mTextWriter.write(ss.str(), pos, FONT_SIZE, WHITE, TextWriter::Alignment::START, TextWriter::Alignment::START);
+        mTextWriter.write(ss.str(), pos, FONT_SIZE, color, TextWriter::Alignment::START, TextWriter::Alignment::START);
         pos.y += FONT_SIZE;
     }
 }

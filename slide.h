@@ -10,6 +10,7 @@
 
 #include "database.h"
 #include "textwriter.h"
+#include "util.h"
 
 /**
  * A displayed slide.
@@ -17,6 +18,9 @@
 class Slide final {
     Photo mPhoto;
     Texture mTexture; // We own this.
+    Timing mLoadTime;
+    Timing mPrepTime;
+
     bool mIsBroken = false;
 
     // What we're drawing.
@@ -45,7 +49,8 @@ class Slide final {
     bool mShowLabels = false;
 
 public:
-    Slide(Photo photo, const Texture &texture) : mPhoto(std::move(photo)), mTexture(texture) {}
+    Slide(Photo photo, const Texture &texture, Timing loadTime, Timing prepTime) :
+        mPhoto(std::move(photo)), mTexture(texture), mLoadTime(loadTime), mPrepTime(prepTime) {}
     ~Slide() {
         UnloadTexture(mTexture);
     }
@@ -100,9 +105,9 @@ public:
     void move(bool paused, bool promptingEmail, double time);
 
     /**
-     * Draw the slide, its labels, and the star rating.
+     * Draw the slide, its labels, and the star rating. Dim by the "fade" (0-1), where 1 means not faded.
      */
-    void draw(TextWriter &textWriter, Texture const &starTexture, int screenWidth, int screenHeight);
+    void draw(TextWriter &textWriter, Texture const &starTexture, int screenWidth, int screenHeight, float fade);
 
     /**
      * Pretend we've not been drawn so that the next draw will start from scratch.

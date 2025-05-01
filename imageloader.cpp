@@ -21,8 +21,8 @@ void ImageLoader::requestImage(Photo const &photo) {
     }
 }
 
-std::vector<std::pair<Photo,std::shared_ptr<Image>>> ImageLoader::getImages() {
-    std::vector<std::pair<Photo,std::shared_ptr<Image>>> images;
+std::vector<LoadedImage> ImageLoader::getLoadedImages() {
+    std::vector<LoadedImage> loadedImages;
 
     while (true) {
         std::optional<Response> response = mExecutor.get();
@@ -30,15 +30,21 @@ std::vector<std::pair<Photo,std::shared_ptr<Image>>> ImageLoader::getImages() {
             break;
         }
 
-        images.emplace_back(response->photo, response->image);
+        loadedImages.emplace_back(LoadedImage {
+            .photo = response->photo,
+            .image = response->image,
+            .loadTime = response->loadTime,
+        });
         mAlreadyRequestedIds.erase(response->photo.id);
     }
 
-    return images;
+    return loadedImages;
 }
 
 ImageLoader::Response ImageLoader::loadPhotoInThread(Request const &request) {
+    auto beginTime = std::chrono::high_resolution_clock::now();
     Image image = LoadImage(request.photo.absolutePathname.c_str());
+    auto endTime = std::chrono::high_resolution_clock::now();
 
     // Move the Image object to the heap. (Lint says the memory is leaked,
     // but I think this is a false positive.)
@@ -47,5 +53,6 @@ ImageLoader::Response ImageLoader::loadPhotoInThread(Request const &request) {
     return Response {
         .photo = request.photo,
         .image = std::shared_ptr<Image>(heapImage, deleteImage),
+        .loadTime = endTime - beginTime,
     };
 }

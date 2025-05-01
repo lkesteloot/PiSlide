@@ -24,7 +24,7 @@ std::shared_ptr<Slide> SlideCache::get(Photo const &photo, bool fetch) {
 }
 
 void SlideCache::checkImageLoader() {
-    for (auto &[photo, image] : mImageLoader.getImages()) {
+    for (auto &loadedImage : mImageLoader.getLoadedImages()) {
         // Make sure the cache has space.
         shrinkCache();
 
@@ -37,7 +37,7 @@ void SlideCache::checkImageLoader() {
 
         // TODO test this, factor out, move into loading thread.
         {
-            Image *imagePtr = image.get();
+            Image *imagePtr = loadedImage.image.get();
             constexpr int BORDER = 4;
             int width = imagePtr->width;
             int height = imagePtr->height;
@@ -65,13 +65,19 @@ void SlideCache::checkImageLoader() {
             }
         }
 
-        Texture texture = LoadTextureFromImage(*image);
+        // Prepare texture.
+        auto beginTime = std::chrono::high_resolution_clock::now();
+        Texture texture = LoadTextureFromImage(*loadedImage.image);
         GenTextureMipmaps(&texture);
         SetTextureFilter(texture, TEXTURE_FILTER_TRILINEAR);
         SetTextureWrap(texture, TEXTURE_WRAP_CLAMP);
-        auto slide = std::make_shared<Slide>(photo, texture);
+        auto endTime = std::chrono::high_resolution_clock::now();
+        auto prepTime = endTime - beginTime;
+
+        // Add to our cache.
+        auto slide = std::make_shared<Slide>(loadedImage.photo, texture, loadedImage.loadTime, prepTime);
         slide->computeIdealSize(mScreenWidth, mScreenHeight);
-        mCache[photo.id] = slide;
+        mCache[loadedImage.photo.id] = slide;
 
         /*
         if slide.is_broken:

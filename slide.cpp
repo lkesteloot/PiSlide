@@ -82,7 +82,7 @@ void Slide::move(bool paused, bool promptingEmail, double time) {
     touch();
 }
 
-void Slide::draw(TextWriter &textWriter, Texture const &starTexture, int screenWidth, int screenHeight) {
+void Slide::draw(TextWriter &textWriter, Texture const &starTexture, int screenWidth, int screenHeight, float fade) {
     // Draw the photo.
     float scale = mActualZoom*mActualWidth/mTexture.width;
     // Negate angle to be compatible with Python version and data in database:
@@ -95,11 +95,11 @@ void Slide::draw(TextWriter &textWriter, Texture const &starTexture, int screenW
     float photoCenterY = mTexture.height*scale/2;
     float x = screenCenterX - (photoCenterX*c - photoCenterY*s);
     float y = screenCenterY - (photoCenterX*s + photoCenterY*c);
-    DrawTextureEx(mTexture, Vector2 { x, y }, angle, scale, Fade(WHITE, mActualAlpha));
+    DrawTextureEx(mTexture, Vector2 { x, y }, angle, scale, Fade(WHITE, mActualAlpha*fade));
 
     // Square the alpha to bias towards transparent, because overlapping text
     // looks bad and we want more transparency during the cross-fade.
-    Color color = Fade(WHITE, mActualAlpha*mActualAlpha);
+    Color color = Fade(WHITE, mActualAlpha*mActualAlpha*fade);
     textWriter.write(mPhoto.label, Vector2 { screenWidth/2.0f, screenHeight - 320.0f },
             48, color, TextWriter::Alignment::CENTER, TextWriter::Alignment::START);
     textWriter.write(mPhoto.displayDate, Vector2 { screenWidth/2.0f, screenHeight - 265.0f },
@@ -109,7 +109,7 @@ void Slide::draw(TextWriter &textWriter, Texture const &starTexture, int screenW
     int rating = mPhoto.rating;
     if (rating != 3) {
         float starScale = STAR_SIZE / starTexture.width;
-        Color starColor = Fade(WHITE, 0.5*mActualAlpha*mActualAlpha);
+        Color starColor = Fade(WHITE, 0.5*mActualAlpha*mActualAlpha*fade);
 
         for (int i = 0; i < rating; i++) {
             Vector2 position {
@@ -128,6 +128,8 @@ void Slide::touch() {
 }
 
 std::ostream &operator<<(std::ostream &os, Slide const &slide) {
-    os << slide.mPhoto;
+    os << slide.mPhoto
+        << ", load " << std::chrono::duration_cast<std::chrono::milliseconds>(slide.mLoadTime)
+        << ", prep " << std::chrono::duration_cast<std::chrono::milliseconds>(slide.mPrepTime);
     return os;
 }

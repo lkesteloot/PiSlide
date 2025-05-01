@@ -1,6 +1,13 @@
 
 #pragma once
 
+#include <chrono>
+
+/**
+ * For timing stuff we do, like loading an image.
+ */
+typedef std::chrono::high_resolution_clock::duration Timing;
+
 /**
  * Computes a modulo b. Assumes b is positive. The
  * result is always between 0 (inclusive) and b (exclusive).

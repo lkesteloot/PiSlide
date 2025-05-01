@@ -8,7 +8,7 @@ LIBS = $(RAYLIB_SRC)/libraylib.a -lsqlite3
 RUN_PREFIX = 
 
 ROOT_DIR = /Users/lk/tmp/pislide-root
-ROOT_DIR = /Users/lk/tmp/pislide-root-small
+#ROOT_DIR = /Users/lk/tmp/pislide-root-small
 
 ifeq ($(HOSTTYPE), Linux-aarch64)
 	RUN_PREFIX = sudo xinit

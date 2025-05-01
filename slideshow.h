@@ -51,7 +51,7 @@ class Slideshow final {
     Photo photoByIndex(int index) const;
 
     // Draw various things.
-    void drawTime();
+    void drawTime(Color color);
     void drawDebug();
 
     // Control the slideshow.
