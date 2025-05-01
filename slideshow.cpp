@@ -284,12 +284,11 @@ void Slideshow::drawDebug() {
         auto slide = mSlideCache.get(photo, false);
         Color color;
         std::stringstream ss;
-        ss << photoIndex << ": ";
+        ss << photoIndex << ": " << photo;
         if (slide) {
-            ss << *slide;
+            ss << ", " << *slide;
             color = WHITE;
         } else {
-            ss << photo;
             color = GRAY;
         }
         if (photoIndex == cs.index) {

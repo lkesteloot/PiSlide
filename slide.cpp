@@ -128,8 +128,7 @@ void Slide::touch() {
 }
 
 std::ostream &operator<<(std::ostream &os, Slide const &slide) {
-    os << slide.mPhoto
-        << ", load " << std::chrono::duration_cast<std::chrono::milliseconds>(slide.mLoadTime)
+    os << "load " << std::chrono::duration_cast<std::chrono::milliseconds>(slide.mLoadTime)
         << ", prep " << std::chrono::duration_cast<std::chrono::milliseconds>(slide.mPrepTime);
     return os;
 }
