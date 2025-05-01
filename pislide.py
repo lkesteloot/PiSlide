@@ -1015,7 +1015,6 @@ class Slideshow(object):
 
     def draw_debug(self):
         # Map from photo ID to Slide.
-        cache = self.slide_cache.get_cache()
         current_photo_index, _, _, _, _ = self.get_current_slide()
         unused_keys = set(self.debug_cache.keys())
 

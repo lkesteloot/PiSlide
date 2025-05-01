@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <algorithm>
 #include <optional>
 #include <utility>
@@ -52,6 +53,9 @@ public:
     // Can't copy, would unload the texture multiple times.
     Slide(const Slide &) = delete;
     Slide &operator=(const Slide &) = delete;
+
+    // Debugging info.
+    friend std::ostream &operator<<(std::ostream &os, Slide const &slide);
 
     /*
         show_twilio_instructions = config.PARTY_MODE and config.TWILIO_SID

@@ -39,9 +39,10 @@ public:
 
     /**
      * Return immediately with a Slide object if we've loaded this photo,
-     * or return an empty pointer and start loading the photo asynchronously.
+     * or return an empty pointer and (if fetch is true) start loading the
+     * photo asynchronously.
      */
-    std::shared_ptr<Slide> get(Photo const &photo);
+    std::shared_ptr<Slide> get(Photo const &photo, bool fetch = true);
 
     /**
      * Reset all slides except these (which can be null).

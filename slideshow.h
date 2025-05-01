@@ -22,6 +22,7 @@ class Slideshow final {
     double mTime = 0;
     bool mPaused = false;
     double mPauseStartTime = 0;
+    bool mDebug = false;
     bool mQuit = false;
 
     /**
@@ -51,10 +52,12 @@ class Slideshow final {
 
     // Draw various things.
     void drawTime();
+    void drawDebug();
 
     // Control the slideshow.
     void jumpRelative(int deltaPhoto);
     void togglePause();
+    void toggleDebug();
 
     // Modify the slide.
     void rotatePhoto(int degrees);

@@ -1,5 +1,6 @@
 
 #include <cmath>
+#include <sstream>
 
 #include "raylib.h"
 
@@ -70,20 +71,13 @@ void Slideshow::draw(Texture const &starTexture) {
     mSlideCache.resetUnused(cs.currentSlide, cs.nextSlide);
 
     // Upper-left:
-    /*
-    if self.prompting_email:
-        self.draw_email_prompt()
-        } else if (self.show_debug:
-        self.draw_debug()
-        } else if (self.showing_bus:
-        self.draw_bus()
+    if (mDebug) {
+        drawDebug();
+    }
 
     // Upper-right:
-    self.draw_time()
-    self.draw_sonos()
-    */
     drawTime();
-    DrawFPS(DISPLAY_MARGIN, DISPLAY_MARGIN);
+
     EndDrawing();
 }
 
@@ -183,7 +177,7 @@ void Slideshow::handleKeyboard() {
         } else if (ch == ' ') {
             togglePause();
         } else if (ch == 'D') {
-            // slideshow.toggle_debug()
+            toggleDebug();
         } else if (ch == 'm') {
             // slideshow.mute()
         } else if (ch == 's') {
@@ -227,6 +221,10 @@ void Slideshow::togglePause() {
     mPauseStartTime = mPaused ? now() : 0;
 }
 
+void Slideshow::toggleDebug() {
+    mDebug = !mDebug;
+}
+
 void Slideshow::drawTime() {
     // All-C API because the C++ stuff is really bad at this.
     std::time_t now = std::time(nullptr);
@@ -237,6 +235,38 @@ void Slideshow::drawTime() {
 
     mTextWriter.write(buffer, Vector2 { mScreenWidth - DISPLAY_MARGIN, DISPLAY_MARGIN },
             64, WHITE, TextWriter::Alignment::END, TextWriter::Alignment::START);
+}
+
+void Slideshow::drawDebug() {
+    constexpr float FONT_SIZE = 30;
+
+    auto cs = getCurrentSlides();
+
+    Vector2 pos { DISPLAY_MARGIN, DISPLAY_MARGIN };
+
+    // Write FPS.
+    int fps = GetFPS();
+    mTextWriter.write(TextFormat("%i FPS", fps), pos, FONT_SIZE, WHITE,
+            TextWriter::Alignment::START, TextWriter::Alignment::START);
+    pos.y += FONT_SIZE*2;
+
+    // Write slide info.
+    for (int photoIndex = cs.index - 5; photoIndex <= cs.index + 5; photoIndex++) {
+        auto photo = photoByIndex(photoIndex);
+        auto slide = mSlideCache.get(photo, false);
+        std::stringstream ss;
+        ss << photoIndex << ": ";
+        if (slide) {
+            ss << *slide;
+        } else {
+            ss << "no slide";
+        }
+        if (photoIndex == cs.index) {
+            ss << " (current)";
+        }
+        mTextWriter.write(ss.str(), pos, FONT_SIZE, WHITE, TextWriter::Alignment::START, TextWriter::Alignment::START);
+        pos.y += FONT_SIZE;
+    }
 }
 
 void Slideshow::rotatePhoto(int degrees) {

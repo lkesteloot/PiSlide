@@ -3,7 +3,7 @@
 
 constexpr int MAX_CACHE_SIZE = 4;
 
-std::shared_ptr<Slide> SlideCache::get(Photo const &photo) {
+std::shared_ptr<Slide> SlideCache::get(Photo const &photo, bool fetch) {
     // Before doing anything, see if the loader has anything for us.
     checkImageLoader();
 
@@ -11,12 +11,15 @@ std::shared_ptr<Slide> SlideCache::get(Photo const &photo) {
         return mCache.at(photo.id);
     }
 
-    // Cap size of cache. Do this before we load the next slide.
-    shrinkCache();
+    if (fetch) {
+        // Cap size of cache. Do this before we load the next slide.
+        shrinkCache();
 
-    // Load the photo.
-    mImageLoader.requestImage(photo);
+        // Load the photo.
+        mImageLoader.requestImage(photo);
+    }
 
+    // Empty pointer to indicate that we don't have it.
     return std::shared_ptr<Slide>();
 }
 

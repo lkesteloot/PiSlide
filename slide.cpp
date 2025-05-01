@@ -126,3 +126,8 @@ void Slide::draw(TextWriter &textWriter, Texture const &starTexture, int screenW
 void Slide::touch() {
     mLastUsed = now();
 }
+
+std::ostream &operator<<(std::ostream &os, Slide const &slide) {
+    os << slide.mPhoto.id << ", " << slide.mPhoto.pathname;
+    return os;
+}
