@@ -83,6 +83,7 @@ public:
     Slideshow &operator=(const Slideshow &) = delete;
 
     bool loopRunning() const;
+    void prefetch();
     void move();
     void draw(Texture const &starTexture);
     void handleKeyboard();

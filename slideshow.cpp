@@ -12,6 +12,20 @@ bool Slideshow::loopRunning() const {
     return !WindowShouldClose() && !mQuit;
 }
 
+void Slideshow::prefetch() {
+    int n = mSlideCache.cacheSize()/2 + 1;
+    int photoIndex = getCurrentPhotoIndex();
+    for (int i = 0; i < n; i++) {
+        auto slide = mSlideCache.get(photoByIndex(photoIndex + i));
+        if (slide) {
+            // Consider the prefetched slides touched because we always prefer them
+            // to the oldest slides.
+            // (TODO: why?)
+            slide->touch();
+        }
+    }
+}
+
 void Slideshow::move() {
     // Amount of time since last frame.
     double frameTime = now();
@@ -259,7 +273,7 @@ void Slideshow::drawDebug() {
         if (slide) {
             ss << *slide;
         } else {
-            ss << "no slide";
+            ss << photo;
         }
         if (photoIndex == cs.index) {
             ss << " (current)";

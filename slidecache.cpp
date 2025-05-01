@@ -1,7 +1,7 @@
 
 #include "slidecache.h"
 
-constexpr int MAX_CACHE_SIZE = 4;
+constexpr int CACHE_SIZE = 4;
 
 std::shared_ptr<Slide> SlideCache::get(Photo const &photo, bool fetch) {
     // Before doing anything, see if the loader has anything for us.
@@ -83,7 +83,7 @@ void SlideCache::checkImageLoader() {
 }
 
 void SlideCache::shrinkCache() {
-    while (mCache.size() >= MAX_CACHE_SIZE) {
+    while (mCache.size() >= CACHE_SIZE) {
         purgeOldest();
     }
 }
@@ -116,4 +116,8 @@ void SlideCache::resetUnused(std::shared_ptr<Slide> currentSlide,
             slide->reset();
         }
     }
+}
+
+int SlideCache::cacheSize() const {
+    return CACHE_SIZE;
 }

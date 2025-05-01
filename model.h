@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <cstdint>
 #include <string>
 
@@ -54,6 +55,8 @@ struct Photo {
     std::string pathname; // Relative to root path.
     std::string absolutePathname;
 };
+
+std::ostream &operator<<(std::ostream &os, Photo const &photo);
 
 /**
  * Represents a photo file on disk. Multiple of these (including minor changes in the header)

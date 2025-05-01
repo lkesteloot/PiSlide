@@ -128,6 +128,6 @@ void Slide::touch() {
 }
 
 std::ostream &operator<<(std::ostream &os, Slide const &slide) {
-    os << slide.mPhoto.id << ", " << slide.mPhoto.pathname;
+    os << slide.mPhoto;
     return os;
 }

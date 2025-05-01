@@ -276,7 +276,7 @@ namespace {
         Slideshow slideshow(dbPhotos, screenWidth, screenHeight, database);
 
         while (slideshow.loopRunning()) {
-            // slideshow.prefetch(MAX_CACHE_SIZE/2 + 1);
+            slideshow.prefetch();
             slideshow.move();
             // slideshow.fetch_twilio_photos();
             slideshow.draw(starTexture);

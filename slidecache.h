@@ -48,4 +48,9 @@ public:
      * Reset all slides except these (which can be null).
      */
     void resetUnused(std::shared_ptr<Slide> currentSlide, std::shared_ptr<Slide> nextSlide);
+
+    /**
+     * The number slides that could fit in the cache.
+     */
+    int cacheSize() const;
 };
