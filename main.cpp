@@ -5,7 +5,6 @@
 #include <random>
 #include <string>
 #include <vector>
-#include <fts.h>
 #include <cstring>
 #include <set>
 #include <map>
@@ -32,7 +31,7 @@ namespace {
     /**
      * Directories to skip altogether. TODO move to config.
      */
-    std::set<std::string> UNWANTED_DIRS = {
+    std::set<std::filesystem::path> UNWANTED_DIRS = {
         ".thumbnails",
         ".small",
         "Broken",
@@ -40,89 +39,70 @@ namespace {
     };
 
     /**
+     * Valid image file extensions. Must be lower case.
+     */
+    std::set<std::string> IMAGE_EXTENSIONS = {
+        ".jpeg",
+        ".jpg",
+    };
+
+    /**
+     * Insane that this is so complicated in C++.
+     */
+    std::string toLowerCase(std::string s) {
+        std::transform(s.begin(), s.end(), s.begin(),
+                [](unsigned char c) { return std::tolower(c); });
+        return s;
+    }
+
+    /**
      * Whether the pathname refers to an image that we want to show.
      */
-    bool isImagePathname(std::string const &pathname) {
-        const char *ext = GetFileExtension(pathname.c_str());
-
-        // It's surprisingly hard to do this in C++.
-        return ext != nullptr && (strcasecmp(ext, ".jpg") == 0 || strcasecmp(ext, ".jpeg") == 0);
+    bool isImagePathname(std::filesystem::path const &pathname) {
+        return IMAGE_EXTENSIONS.contains(toLowerCase(pathname.extension().string()));
     }
 
     /*
      * Gets a set of all pathnames in the image directory. These are relative to the
      * passed-in root dir.
      */
-    std::set<std::string> traverseDirectoryTree(std::string const &rootDir) {
+    std::set<std::string> traverseDirectoryTree(std::filesystem::path const &rootDir) {
         std::set<std::string> pathnames;
 
-        if (rootDir.ends_with("/")) {
+        if (rootDir.string().ends_with("/")) {
             throw std::invalid_argument("rootDir must not end with a slash");
         }
 
-        char *paths[] = { const_cast<char*>(rootDir.c_str()), nullptr };
+        try {
+            for (auto itr = std::filesystem::recursive_directory_iterator(rootDir,
+                    std::filesystem::directory_options::follow_directory_symlink);
+                    itr != std::filesystem::recursive_directory_iterator(); ++itr) {
 
-        FTS *ftsp = fts_open(paths, FTS_LOGICAL | FTS_NOSTAT, nullptr);
-        if (ftsp == nullptr) {
-            perror("fts_open");
-            return pathnames;
-        }
-
-        FTSENT *ent;
-        while ((ent = fts_read(ftsp)) != nullptr) {
-            switch (ent->fts_info) {
-                case FTS_D: {
-                    std::string dirname = GetFileName(ent->fts_path);
-                    if (UNWANTED_DIRS.contains(dirname)) {
-                        fts_set(ftsp, ent, FTS_SKIP);
-                    }
-                    break;
-                }
-
-                case FTS_F:
-                case FTS_NSOK: {
-                    std::string path = ent->fts_path;
+                auto const &entry = *itr;
+                std::filesystem::path path = entry.path();
+                if (entry.is_regular_file()) {
                     if (isImagePathname(path)) {
                         // Strip rootDir.
-                        if (path.starts_with(rootDir)) {
-                            std::string subpath = path.substr(rootDir.size());
-                            while (subpath.starts_with("/")) {
-                                subpath = subpath.substr(1);
-                            }
-                            pathnames.insert(subpath);
+                        if (path.string().starts_with(rootDir.string())) {
+                            // Create a relative path by removing the rootDir prefix
+                            pathnames.insert(path.lexically_relative(rootDir));
                         } else {
-                            throw std::invalid_argument(std::string("path does not start with rootDir: " + path));
+                            throw std::invalid_argument(std::string("path does not start with rootDir: ") + path.string());
                         }
                     }
-                    break;
+                } else if (entry.is_directory()) {
+                    if (UNWANTED_DIRS.contains(path.filename())) {
+                        // Don't recurse.
+                        itr.disable_recursion_pending();
+                    }
+                } else {
+                    std::cerr << "Unknown directory entry type: " << path << '\n';
+                    pathnames.clear();
+                    return pathnames;
                 }
-
-                case FTS_DP:
-                    // std::cout << "Leaving directory: " << ent->fts_path << '\n';
-                    break;
-
-                case FTS_SL:
-                    // TODO
-                    std::cout << "Symbolic link: " << ent->fts_path << '\n';
-                    break;
-
-                case FTS_ERR:
-                    // TODO
-                    std::cerr << "Error: " << ent->fts_path << ": " <<
-                        strerror(ent->fts_errno) << '\n';
-                    break;
-
-                default:
-                    break;
             }
-        }
-
-        if (errno != 0) {
-            perror("fts_read");
-        }
-
-        if (fts_close(ftsp) != 0) {
-            perror("fts_close");
+        } catch (std::filesystem::filesystem_error const &e) {
+            std::cerr << "Filesystem error: " << e.what() << '\n';
         }
 
         return pathnames;
@@ -159,7 +139,7 @@ namespace {
                 if (diskPathnames.contains(photoFile->second->pathname)) {
                     Photo newPhoto = photo;
                     newPhoto.pathname = photoFile->second->pathname;
-                    newPhoto.absolutePathname = config.rootDir + "/" + newPhoto.pathname;
+                    newPhoto.absolutePathname = config.rootDir / newPhoto.pathname;
                     goodPhotos.push_back(newPhoto);
                     found = true;
                     break;

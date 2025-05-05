@@ -20,7 +20,7 @@ namespace {
     }
 }
 
-bool Config::readConfigFile(std::string const &pathname) {
+bool Config::readConfigFile(std::filesystem::path const &pathname) {
     return true;
 }
 

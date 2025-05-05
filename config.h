@@ -2,6 +2,7 @@
 #pragma once
 
 #include <string>
+#include <filesystem>
 
 /**
  * Holds all configurations. This includes:
@@ -14,12 +15,12 @@ struct Config final {
     /**
      * Root directory of photo files. Must not end with slash.
      */
-    std::string rootDir;
+    std::filesystem::path rootDir;
 
     /**
      * Loads the config file from disk. Returns whether successful.
      */
-    bool readConfigFile(std::string const &pathname);
+    bool readConfigFile(std::filesystem::path const &pathname);
 
     /**
      * Parses the command-line arguments. Returns whether successful.
