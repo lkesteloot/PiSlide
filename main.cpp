@@ -9,6 +9,7 @@
 #include <cstring>
 #include <set>
 #include <map>
+#include <filesystem>
 
 #include "raylib.h"
 
@@ -97,18 +98,18 @@ namespace {
                 }
 
                 case FTS_DP:
-                    // std::cout << "Leaving directory: " << ent->fts_path << std::endl;
+                    // std::cout << "Leaving directory: " << ent->fts_path << '\n';
                     break;
 
                 case FTS_SL:
                     // TODO
-                    std::cout << "Symbolic link: " << ent->fts_path << std::endl;
+                    std::cout << "Symbolic link: " << ent->fts_path << '\n';
                     break;
 
                 case FTS_ERR:
                     // TODO
                     std::cerr << "Error: " << ent->fts_path << ": " <<
-                        strerror(ent->fts_errno) << std::endl;
+                        strerror(ent->fts_errno) << '\n';
                     break;
 
                 default:
@@ -168,13 +169,13 @@ namespace {
                 // Can't find any file on disk for this photo.
                 warningCount += 1;
                 if (warningCount <= MAX_FILE_WARNING_COUNT) {
-                    std::cout << "No file on disk for " << photo.hashBack << " (" << photo.label << ")" << std::endl;
+                    std::cout << "No file on disk for " << photo.hashBack << " (" << photo.label << ")" << '\n';
                 }
             }
         }
 
         if (warningCount != 0) {
-            std::cout << "Files missing on disk: " << warningCount << std::endl;
+            std::cout << "Files missing on disk: " << warningCount << '\n';
         }
 
         return goodPhotos;
@@ -199,6 +200,10 @@ namespace {
     int mainCanThrow(int argc, char *argv[]) {
         Database database;
 
+        // Raylib is very verbose at INFO level, just keep the warnings.
+        SetTraceLogLevel(LOG_WARNING);
+        // TODO use SetTraceLogCallback() to redirect raylib logs to a log file.
+
         // Write integers for humans (commas, etc.).
         std::cout.imbue(std::locale(""));
 
@@ -218,20 +223,20 @@ namespace {
 
         // Recursively read the photo tree from the disk.
         std::set<std::string> diskPathnames = traverseDirectoryTree(config.rootDir);
-        std::cout << "Photos on disk: " << diskPathnames.size() << std::endl;
+        std::cout << "Photos on disk: " << diskPathnames.size() << '\n';
 
         // TODO optionally resize images.
 
         // Get all photo files from the database.
         std::vector<PhotoFile> dbPhotoFiles = database.getAllPhotoFiles();
-        std::cout << "Photo files in database: " << dbPhotoFiles.size() << std::endl;
+        std::cout << "Photo files in database: " << dbPhotoFiles.size() << '\n';
 
         // TODO Compute missing hashes of photos, add them to database.
         // handle_new_and_renamed_files(con, diskPathnames, db_photo_files)
 
         // Keep only photos of the right rating and date range.
         std::vector<Photo> dbPhotos = database.getAllPhotos();
-        std::cout << "Photos in database: " << dbPhotos.size() << std::endl;
+        std::cout << "Photos in database: " << dbPhotos.size() << '\n';
         // dbPhotos = filter_photos_by_rating(dbPhotos, args.min_rating)
         // print("Photos after rating filter: %d" % (len(dbPhotos),))
         // dbPhotos = filter_photos_by_date(dbPhotos, args.min_days, args.max_days)
@@ -244,10 +249,10 @@ namespace {
         dbPhotos = filterPhotosByPathnameSubstring(dbPhotos);
         // print("Photos after dir filter: %d" % (len(dbPhotos),))
 
-        std::cout << "Final photos to be shown: " << dbPhotos.size() << std::endl;
+        std::cout << "Final photos to be shown: " << dbPhotos.size() << '\n';
 
         if (dbPhotos.empty()) {
-            std::cerr << "Error: No photos found." << std::endl;
+            std::cerr << "Error: No photos found." << '\n';
             return -1;
         }
 
@@ -263,7 +268,7 @@ namespace {
         // This is really the window size:
         int screenWidth = GetScreenWidth();
         int screenHeight = GetScreenHeight();
-        std::cout << "Window size: " << screenWidth << "x" << screenHeight << std::endl;
+        std::cout << "Window size: " << screenWidth << "x" << screenHeight << '\n';
 
         // Load the star icon.
         Texture starTexture = LoadTexture("outline-star-256.png");
@@ -293,7 +298,7 @@ int main(int argc, char *argv[]) {
     try {
         return mainCanThrow(argc, argv);
     } catch (const std::exception &e) {
-        std::cerr << "Caught exception (" << e.what() << ")" << std::endl;
+        std::cerr << "Caught exception (" << e.what() << ")" << '\n';
     }
     return -1;
 }

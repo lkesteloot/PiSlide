@@ -40,12 +40,12 @@ bool Config::parseCommandLine(int argc, char *argv[]) {
 
         if (arg == "--root-dir") {
             if (args.empty()) {
-                std::cerr << "Must specify directory for --root-dir" << std::endl;
+                std::cerr << "Must specify directory for --root-dir" << '\n';
                 return false;
             }
             rootDir = stripTrailingSlash(nextArg());
         } else {
-            std::cerr << "Unknown flag: " << arg << std::endl;
+            std::cerr << "Unknown flag: " << arg << '\n';
             return false;
         }
     }
@@ -55,7 +55,7 @@ bool Config::parseCommandLine(int argc, char *argv[]) {
 
 bool Config::isValid() const {
     if (rootDir.empty()) {
-        std::cerr << "Must specify a rootDir" << std::endl;
+        std::cerr << "Must specify a rootDir" << '\n';
         return false;
     }
 

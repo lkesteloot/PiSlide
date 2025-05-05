@@ -36,9 +36,9 @@ class Executor final {
                 RESPONSE response = mRun(*request);
                 mResponseQueue.enqueue(response);
             } catch (std::exception const &e) {
-                std::cerr << "Executor run function threw exception: " << e.what() << std::endl;
+                std::cerr << "Executor run function threw exception: " << e.what() << '\n';
             } catch (...) {
-                std::cerr << "Executor run function threw exception" << std::endl;
+                std::cerr << "Executor run function threw exception" << '\n';
             }
         }
     }

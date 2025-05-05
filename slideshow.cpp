@@ -140,7 +140,7 @@ void Slideshow::handleKeyboard() {
     // Unicode code point.
     int ch = GetCharPressed();
     if (ch != KEY_NULL) {
-        std::cout << "Got char " << ch << std::endl; // TODO remove
+        std::cout << "Got char " << ch << '\n'; // TODO remove
         /*
         if self.prompting_email:
             if ch == 27: # ESC
@@ -207,14 +207,14 @@ void Slideshow::handleKeyboard() {
         } else if (ch >= '1' and ch <= '5') {
             ratePhoto(ch - '1' + 1);
         } else {
-            std::cout << "Got unknown char " << ch << std::endl; // TODO remove
+            std::cout << "Got unknown char " << ch << '\n'; // TODO remove
         }
     }
 
     // Non-character keys.
     int key = GetKeyPressed();
     if (key != 0) {
-        std::cout << "Got key " << key << std::endl; // TODO remove
+        std::cout << "Got key " << key << '\n'; // TODO remove
         if (key == KEY_LEFT) {
             jumpRelative(-1);
         } else if (key == KEY_RIGHT) {
@@ -222,7 +222,7 @@ void Slideshow::handleKeyboard() {
         } else if (key >= KEY_F1 and key <= KEY_F12) {
             // slideshow.play_radio_station(key - KEY_F1);
         } else {
-            std::cout << "Got unknown key " << key << std::endl; // TODO remove
+            std::cout << "Got unknown key " << key << '\n'; // TODO remove
         }
     }
 }
