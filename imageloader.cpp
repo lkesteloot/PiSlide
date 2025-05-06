@@ -5,12 +5,6 @@
 #include "constants.h"
 
 namespace {
-    // Unload and delete the image.
-    void deleteImage(const Image *image) {
-        UnloadImage(*image);
-        delete image;
-    }
-
     /**
      * Replace the "size" pixels at the border of the image
      * with transparent pixels.
@@ -82,20 +76,24 @@ ImageLoader::Response ImageLoader::loadPhotoInThread(Request const &request) {
     Image image = LoadImage(request.photo.absolutePathname.c_str());
     auto endTime = std::chrono::high_resolution_clock::now();
 
-    // Move the Image object to the heap. (Lint says the memory is leaked,
-    // but I think this is a false positive.)
-    auto *heapImage = new Image(image);
+    std::shared_ptr<Image> imagePtr;
+    if (IsImageValid(image)) {
+        // We don't get good anti-aliasing at the edge of the image, so make
+        // the border transparent, which anti-aliases much better.
+        drawTransparentBorder(&image, TRANSPARENT_BORDER);
 
-    // We don't get good anti-aliasing at the edge of the image, so make
-    // the border transparent, which anti-aliases much better.
-    drawTransparentBorder(heapImage, TRANSPARENT_BORDER);
+        // TODO see if we can compute the mipmaps here. Compare with doing it
+        // in the GPU later on the Texture object.
 
-    // TODO see if we can compute the mipmaps here. Compare with doing it
-    // in the GPU later on the Texture object.
+        imagePtr = makeImageSharedPtr(image);
+    } else {
+        // Image failed to load.
+        std::cerr << "Failed to load " << request.photo.absolutePathname << '\n';
+    }
 
     return Response {
         .photo = request.photo,
-        .image = std::shared_ptr<Image>(heapImage, deleteImage),
+        .image = imagePtr,
         .loadTime = endTime - beginTime,
     };
 }

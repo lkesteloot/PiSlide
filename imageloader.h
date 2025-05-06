@@ -17,6 +17,7 @@
  */
 struct LoadedImage {
     Photo photo;
+    // If the pointer is null, the image failed to load.
     std::shared_ptr<Image> image;
     Timing loadTime;
 };

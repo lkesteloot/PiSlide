@@ -21,7 +21,7 @@ class Slide final {
     Timing mLoadTime;
     Timing mPrepTime;
 
-    bool mIsBroken = false;
+    bool mIsBroken;
 
     // What we're drawing.
     float mActualRotate = 0;
@@ -49,8 +49,8 @@ class Slide final {
     bool mShowLabels = false;
 
 public:
-    Slide(Photo photo, const Texture &texture, Timing loadTime, Timing prepTime) :
-        mPhoto(std::move(photo)), mTexture(texture), mLoadTime(loadTime), mPrepTime(prepTime) {}
+    Slide(Photo photo, const Texture &texture, Timing loadTime, Timing prepTime, bool isBroken) :
+        mPhoto(std::move(photo)), mTexture(texture), mLoadTime(loadTime), mPrepTime(prepTime), mIsBroken(isBroken) {}
     ~Slide() {
         UnloadTexture(mTexture);
     }

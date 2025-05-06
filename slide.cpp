@@ -48,7 +48,7 @@ void Slide::move(bool paused, bool promptingEmail, double time) {
         mConfigured = true;
     }
 
-    mActualRotate = interpolate(mActualRotate, mPhoto.rotation, step);
+    mActualRotate = interpolate(mActualRotate, isBroken() ? 0 : mPhoto.rotation, step);
     mActualWidth = interpolate(mActualWidth, mIdealWidth, step);
     mActualHeight = interpolate(mActualHeight, mIdealHeight, step);
 
@@ -130,5 +130,8 @@ void Slide::touch() {
 std::ostream &operator<<(std::ostream &os, Slide const &slide) {
     os << "load " << std::chrono::duration_cast<std::chrono::milliseconds>(slide.mLoadTime)
         << ", prep " << std::chrono::duration_cast<std::chrono::milliseconds>(slide.mPrepTime);
+    if (slide.isBroken()) {
+        os << ", broken";
+    }
     return os;
 }

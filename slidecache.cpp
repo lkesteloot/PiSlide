@@ -27,16 +27,10 @@ void SlideCache::checkImageLoader() {
         // Make sure the cache has space.
         shrinkCache();
 
-        // The slide might be None if we couldn't load it. This causes problems
-        // throughout the rest of the program, and we can't easily purge it
-        // from the cache, so we make a fake slide.
-        // TODO support this.
-        //if not slide:
-            //slide = BrokenSlide()
-
-        // Prepare texture.
+        // Convert to a texture.
         auto beginTime = std::chrono::high_resolution_clock::now();
-        Texture texture = LoadTextureFromImage(*loadedImage.image);
+        std::shared_ptr<Image> image = loadedImage.image ? loadedImage.image : mBrokenImage;
+        Texture texture = LoadTextureFromImage(*image);
         GenTextureMipmaps(&texture);
         SetTextureFilter(texture, TEXTURE_FILTER_TRILINEAR);
         SetTextureWrap(texture, TEXTURE_WRAP_CLAMP);
@@ -44,16 +38,10 @@ void SlideCache::checkImageLoader() {
         auto prepTime = endTime - beginTime;
 
         // Add to our cache.
-        auto slide = std::make_shared<Slide>(loadedImage.photo, texture, loadedImage.loadTime, prepTime);
+        auto slide = std::make_shared<Slide>(loadedImage.photo, texture,
+                loadedImage.loadTime, prepTime, !loadedImage.image);
         slide->computeIdealSize(mScreenWidth, mScreenHeight);
         mCache[loadedImage.photo.id] = slide;
-
-        /*
-        if slide.is_broken:
-            LOGGER.error("Couldn't load image")
-        else:
-            LOGGER.debug("Reading image took %.1f seconds (%d frames)." % (slide.load_time, slide.frame_count))
-            */
     }
 }
 

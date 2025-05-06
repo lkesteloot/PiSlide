@@ -16,8 +16,8 @@ class Slideshow final {
     int mScreenWidth;
     int mScreenHeight;
     Database const &mDatabase;
-    SlideCache mSlideCache;
     TextWriter mTextWriter;
+    SlideCache mSlideCache;
     double mPreviousFrameTime = 0;
     double mTime = 0;
     bool mPaused = false;
@@ -63,6 +63,9 @@ class Slideshow final {
     void rotatePhoto(int degrees);
     void ratePhoto(int rating);
 
+    // Make the image that will be used if an image file fails to load.
+    static std::shared_ptr<Image> makeBrokenImage(TextWriter &textWriter);
+
 public:
     Slideshow(std::vector<Photo> const &dbPhotos,
             int screenWidth,
@@ -72,7 +75,7 @@ public:
         mScreenWidth(screenWidth),
         mScreenHeight(screenHeight),
         mDatabase(database),
-        mSlideCache(screenWidth, screenHeight) {
+        mSlideCache(screenWidth, screenHeight, makeBrokenImage(mTextWriter)) {
 
         // We'll handle this.
         SetExitKey(0);

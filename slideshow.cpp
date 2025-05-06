@@ -54,10 +54,10 @@ void Slideshow::move() {
     }
 
     auto cs = getCurrentSlides();
-    if (cs.currentSlide && !cs.currentSlide->isBroken()) {
+    if (cs.currentSlide) {
         cs.currentSlide->move(mPaused, false, cs.currentTimeOffset);
     }
-    if (cs.nextSlide && !cs.nextSlide->isBroken()) {
+    if (cs.nextSlide) {
         cs.nextSlide->move(mPaused, false, cs.nextTimeOffset);
     }
 }
@@ -75,10 +75,10 @@ void Slideshow::draw(Texture const &starTexture) {
     // the draw, meaning that the draw will happen before it's
     // been positioned. Skip drawing in case the bad positioning
     // causes problems (despite zero alpha).
-    if (cs.currentSlide && !cs.currentSlide->isBroken() && cs.currentSlide->configured()) {
+    if (cs.currentSlide && cs.currentSlide->configured()) {
         cs.currentSlide->draw(mTextWriter, starTexture, mScreenWidth, mScreenHeight, fade);
     }
-    if (cs.nextSlide && !cs.nextSlide->isBroken() && cs.nextSlide->configured()) {
+    if (cs.nextSlide && cs.nextSlide->configured()) {
         cs.nextSlide->draw(mTextWriter, starTexture, mScreenWidth, mScreenHeight, fade);
     }
 
@@ -322,3 +322,17 @@ void Slideshow::ratePhoto(int rating) {
         slide->persistState(mDatabase);
     }
 }
+
+std::shared_ptr<Image> Slideshow::makeBrokenImage(TextWriter &textWriter) {
+    Image image = GenImageGradientRadial(1024, 1024, 0.0f,
+            ColorFromHSV(20.0f, 0.2f, 0.2f),
+            ColorFromHSV(20.0f, 0.2f, 0.1f));
+    std::shared_ptr<Image> textImage = textWriter.makeImage("broken image", 128, WHITE);
+    float width = textImage->width;
+    float height = textImage->height;
+    Rectangle srcRec = { 0.0f, 0.0f, width, height };
+    Rectangle dstRec = { (image.width - width)/2, (image.height - height)/2, width, height };
+    ImageDraw(&image, *textImage, srcRec, dstRec, WHITE);
+    return makeImageSharedPtr(image);
+}
+

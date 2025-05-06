@@ -1,7 +1,10 @@
 
 #pragma once
 
+#include "raylib.h"
+
 #include <chrono>
+#include <memory>
 
 /**
  * For timing stuff we do, like loading an image.
@@ -23,3 +26,10 @@ float interpolate(float a, float b, float t);
  * Time in seconds since some arbitrary time.
  */
 double now();
+
+/**
+ * Make shared_ptr versions of raylib structures. When the last reference
+ * is lost, the structures will be unloaded.
+ */
+std::shared_ptr<Image> makeImageSharedPtr(Image image);
+std::shared_ptr<Font> makeFontSharedPtr(Font font);

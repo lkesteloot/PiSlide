@@ -14,6 +14,11 @@ class TextWriter final {
     // Font size to font.
     std::map<float,std::shared_ptr<Font>> mFontCache;
 
+    /**
+     * Get or load (and cache) a font at the given size.
+     */
+    std::shared_ptr<Font> getFont(float fontSize);
+
 public:
     TextWriter() = default;
 
@@ -41,4 +46,11 @@ public:
                Color color,
                Alignment horizontal,
                Alignment vertical);
+
+    /**
+     * Make an image with the given text.
+     */
+    std::shared_ptr<Image> makeImage(std::string const &text,
+               float fontSize,
+               Color color);
 };

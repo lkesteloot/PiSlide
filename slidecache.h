@@ -7,22 +7,24 @@
 #include "model.h"
 #include "slide.h"
 #include "imageloader.h"
+#include "textwriter.h"
 
 /**
  * Cache from photo to slide. Loads slides on demand when a photo is
  * asked for and isn't in the cache.
  */
 class SlideCache final {
+    // Size of window.
+    int mScreenWidth;
+    int mScreenHeight;
+    std::shared_ptr<Image> mBrokenImage;
+
     // Map from photo ID to Slide. The pointer is empty if the image
     // failed to load.
     std::map<int32_t,std::shared_ptr<Slide>> mCache;
 
     // Loads images asynchronously.
     ImageLoader mImageLoader;
-
-    // Size of window;
-    int mScreenWidth;
-    int mScreenHeight;
 
     // Drain the return queue of the loader.
     void checkImageLoader();
@@ -34,8 +36,9 @@ class SlideCache final {
     void purgeOldest();
 
 public:
-    SlideCache(int screenWidth, int screenHeight)
-        : mScreenWidth(screenWidth), mScreenHeight(screenHeight) {}
+    SlideCache(int screenWidth, int screenHeight, std::shared_ptr<Image> brokenImage)
+        : mScreenWidth(screenWidth), mScreenHeight(screenHeight),
+            mBrokenImage(brokenImage) {}
 
     /**
      * Return immediately with a Slide object if we've loaded this photo,
