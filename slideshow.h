@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include "config.h"
 #include "database.h"
 #include "slide.h"
 #include "slidecache.h"
@@ -15,6 +16,7 @@ class Slideshow final {
     std::vector<Photo> const &mDbPhotos;
     int mScreenWidth;
     int mScreenHeight;
+    Config const &mConfig;
     Database const &mDatabase;
     TextWriter mTextWriter;
     SlideCache mSlideCache;
@@ -70,10 +72,12 @@ public:
     Slideshow(std::vector<Photo> const &dbPhotos,
             int screenWidth,
             int screenHeight,
+            Config const &config,
             Database const &database)
         : mDbPhotos(dbPhotos),
         mScreenWidth(screenWidth),
         mScreenHeight(screenHeight),
+        mConfig(config),
         mDatabase(database),
         mSlideCache(screenWidth, screenHeight, makeBrokenImage(mTextWriter)) {
 

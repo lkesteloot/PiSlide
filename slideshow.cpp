@@ -33,7 +33,7 @@ void Slideshow::move() {
     mPreviousFrameTime = frameTime;
 
     // Auto-disable paused after a while.
-    if (mPaused && mPauseStartTime != 0 && now() - mPauseStartTime >= MAX_PAUSE_SECONDS) {
+    if (mPaused && mPauseStartTime != 0 && now() - mPauseStartTime >= mConfig.maxPauseTime) {
         mPaused = false;
         mPauseStartTime = 0;
     }
@@ -55,10 +55,10 @@ void Slideshow::move() {
 
     auto cs = getCurrentSlides();
     if (cs.currentSlide) {
-        cs.currentSlide->move(mPaused, false, cs.currentTimeOffset);
+        cs.currentSlide->move(mConfig, mPaused, false, cs.currentTimeOffset);
     }
     if (cs.nextSlide) {
-        cs.nextSlide->move(mPaused, false, cs.nextTimeOffset);
+        cs.nextSlide->move(mConfig, mPaused, false, cs.nextTimeOffset);
     }
 }
 
@@ -111,25 +111,27 @@ Slideshow::CurrentSlides Slideshow::getCurrentSlides() {
         return cs;
     }
 
+    float slideTotalTime = mConfig.slideTotalTime();
+
     cs.currentSlide = mSlideCache.get(photoByIndex(photoIndex));
     if (cs.currentSlide && !cs.currentSlide->swapZoom().has_value()) {
         cs.currentSlide->setSwapZoom(modulo(photoIndex, 2) == 0);
     }
-    cs.currentTimeOffset = mTime - photoIndex*SLIDE_DISPLAY_S;
+    cs.currentTimeOffset = mTime - photoIndex*slideTotalTime;
 
-    if (cs.currentTimeOffset >= SLIDE_DISPLAY_S - SLIDE_TRANSITION_S) {
+    if (cs.currentTimeOffset >= slideTotalTime - mConfig.slideTransitionTime) {
         cs.nextSlide = mSlideCache.get(photoByIndex(photoIndex + 1));
         if (cs.nextSlide && !cs.nextSlide->swapZoom().has_value()) {
             cs.nextSlide->setSwapZoom(modulo(photoIndex + 1, 2) == 0);
         }
-        cs.nextTimeOffset = cs.currentTimeOffset - SLIDE_DISPLAY_S;
+        cs.nextTimeOffset = cs.currentTimeOffset - slideTotalTime;
     }
 
     return cs;
 }
 
 int Slideshow::getCurrentPhotoIndex() const {
-    return static_cast<int>(std::floor(mTime/SLIDE_DISPLAY_S));
+    return static_cast<int>(std::floor(mTime/mConfig.slideTotalTime()));
 }
 
 Photo Slideshow::photoByIndex(int index) const {
@@ -229,7 +231,7 @@ void Slideshow::handleKeyboard() {
 
 void Slideshow::jumpRelative(int deltaSlide) {
     auto cs = getCurrentSlides();
-    mTime = std::max(0.0, mTime + deltaSlide*SLIDE_DISPLAY_S - cs.currentTimeOffset);
+    mTime = std::max(0.0, mTime + deltaSlide*mConfig.slideTotalTime() - cs.currentTimeOffset);
 }
 
 void Slideshow::togglePause() {

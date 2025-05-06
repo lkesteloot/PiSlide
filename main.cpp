@@ -189,7 +189,7 @@ namespace {
 
         // Get our configuration.
         Config config;
-        bool success = config.readConfigFile("pislide.toml");
+        bool success = config.readConfigFile("config.toml");
         if (!success) {
             return 1;
         }
@@ -258,7 +258,7 @@ namespace {
         // Match Python version FPS.
         SetTargetFPS(40);
 
-        Slideshow slideshow(dbPhotos, screenWidth, screenHeight, database);
+        Slideshow slideshow(dbPhotos, screenWidth, screenHeight, config, database);
 
         while (slideshow.loopRunning()) {
             slideshow.prefetch();

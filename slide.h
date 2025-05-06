@@ -8,6 +8,7 @@
 
 #include "raylib.h"
 
+#include "config.h"
 #include "database.h"
 #include "textwriter.h"
 #include "util.h"
@@ -102,7 +103,7 @@ public:
      * to start of display of slide, where 0 means it's fully visible and negative
      * means it's fading in.
      */
-    void move(bool paused, bool promptingEmail, double time);
+    void move(Config const &config, bool paused, bool promptingEmail, double time);
 
     /**
      * Draw the slide, its labels, and the star rating. Dim by the "fade" (0-1), where 1 means not faded.

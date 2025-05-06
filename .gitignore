@@ -7,3 +7,4 @@ resources
 .python-version
 *.dSYM
 .idea
+config.toml

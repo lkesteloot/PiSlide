@@ -37,7 +37,7 @@ void Slide::computeIdealSize(int screenWidth, int screenHeight) {
     mIdealHeight = height;
 }
 
-void Slide::move(bool paused, bool promptingEmail, double time) {
+void Slide::move(Config const &config, bool paused, bool promptingEmail, double time) {
     // How much to move toward target.
     float step;
     if (mConfigured) {
@@ -59,17 +59,19 @@ void Slide::move(bool paused, bool promptingEmail, double time) {
         idealAlpha = time >= 0 ? (promptingEmail ? 0.2f : 1.0f) : 0.0f;
         mShowLabels = time >= 0;
     } else {
-        float t = time/SLIDE_DISPLAY_S;
+        float slideTotalTime = config.slideTotalTime();
+        float slideTransitionTime = config.slideTransitionTime;
+        float t = time/slideTotalTime;
         idealZoom = interpolate(mStartZoom, mEndZoom, mSwapZoom.value_or(false) ? 1 - t : t);
 
         if (time < 0) {
-            idealAlpha = std::clamp((time + SLIDE_TRANSITION_S)/SLIDE_TRANSITION_S, 0.0, 1.0);
+            idealAlpha = std::clamp((time + slideTransitionTime)/slideTransitionTime, 0.0, 1.0);
             mShowLabels = false;
-        } else if (time < SLIDE_DISPLAY_S - SLIDE_TRANSITION_S) {
+        } else if (time < slideTotalTime - slideTransitionTime) {
             idealAlpha = 1.0;
             mShowLabels = true;
         } else {
-            idealAlpha = std::clamp((SLIDE_DISPLAY_S - time)/SLIDE_TRANSITION_S, 0.0, 1.0);
+            idealAlpha = std::clamp((slideTotalTime - time)/slideTransitionTime, 0.0, 1.0);
             mShowLabels = false;
         }
     }

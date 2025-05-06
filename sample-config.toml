@@ -1,0 +1,14 @@
+
+# Root directory of the photo tree:
+root_dir = "/my/photos"
+
+# Amount of time each slide is displayed (not including transitions), in seconds:
+slide_display_time = 12
+
+# Transition time, in seconds:
+slide_transition_time = 2
+
+# Maximum amount of time the slideshow will be left paused before it
+# automatically resumes, in seconds:
+max_pause_time = 3600
+

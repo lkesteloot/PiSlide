@@ -2,6 +2,8 @@
 #include <iostream>
 #include <deque>
 
+#include "toml++/toml.hpp"
+
 #include "config.h"
 
 namespace {
@@ -20,7 +22,47 @@ namespace {
     }
 }
 
+Config::Config() :
+    slideDisplayTime(12), slideTransitionTime(2), maxPauseTime(60*60) {}
+
 bool Config::readConfigFile(std::filesystem::path const &pathname) {
+    try {
+        auto config = toml::parse_file(pathname.string());
+
+        if (auto rootDir = config["root_dir"].value<std::string>()) {
+            this->rootDir = *rootDir;
+        }
+
+        if (auto slideDisplayTime = config["slide_display_time"].value<float>()) {
+            this->slideDisplayTime = *slideDisplayTime;
+        }
+
+        if (auto slideTransitionTime = config["slide_transition_time"].value<float>()) {
+            this->slideTransitionTime = *slideTransitionTime;
+        }
+
+        if (auto maxPauseTime = config["max_pause_time"].value<float>()) {
+            this->maxPauseTime = *maxPauseTime;
+        }
+
+        /*
+        // Get array of strings
+        if (auto servers = config["servers"].as_array()) {
+            std::cout << "Servers:\n";
+            for (const auto& val : *servers) {
+                if (auto s = val.value<std::string>())
+                    std::cout << "  - " << *s << "\n";
+            }
+        }
+        */
+
+    } catch (toml::parse_error const &err) {
+        std::cerr << "Problem with config file " << pathname << ":\n"
+                << "  " << err.description() << '\n'
+                << "  at " << err.source().begin << '\n';
+        return false;
+    }
+
     return true;
 }
 
