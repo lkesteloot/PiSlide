@@ -23,7 +23,8 @@ namespace {
 }
 
 Config::Config() :
-    slideDisplayTime(12), slideTransitionTime(2), maxPauseTime(60*60) {}
+    slideDisplayTime(12), slideTransitionTime(2), maxPauseTime(60*60), minRating(3),
+    minDays(0), maxDays(0) {}
 
 bool Config::readConfigFile(std::filesystem::path const &pathname) {
     try {
@@ -43,6 +44,18 @@ bool Config::readConfigFile(std::filesystem::path const &pathname) {
 
         if (auto maxPauseTime = config["max_pause_time"].value<float>()) {
             this->maxPauseTime = *maxPauseTime;
+        }
+
+        if (auto minRating = config["min_rating"].value<int>()) {
+            this->minRating = *minRating;
+        }
+
+        if (auto minDays = config["min_days"].value<int>()) {
+            this->minDays = *minDays;
+        }
+
+        if (auto maxDays = config["max_days"].value<int>()) {
+            this->maxDays = *maxDays;
         }
 
         /*

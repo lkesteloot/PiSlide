@@ -108,6 +108,29 @@ namespace {
         return pathnames;
     }
 
+    // Keep photos of at least this rating.
+    void filterPhotosByRating(std::vector<Photo> &dbPhotos, Config const &config) {
+        int minRating = config.minRating;
+
+        dbPhotos.erase(std::remove_if(dbPhotos.begin(), dbPhotos.end(),
+                    [minRating](Photo const &photo) {
+                        return photo.rating < minRating;
+                    }), dbPhotos.end());
+    }
+
+    // Keep photos in date range.
+    void filterPhotosByDate(std::vector<Photo> &dbPhotos, Config const &config) {
+        time_t currentTime = std::time(0);
+        long maxDate = config.minDays == 0 ? 0 : currentTime - config.minDays*24*60*60;
+        long minDate = config.maxDays == 0 ? 0 : currentTime - config.maxDays*24*60*60;
+
+        dbPhotos.erase(std::remove_if(dbPhotos.begin(), dbPhotos.end(),
+                    [minDate, maxDate](Photo const &photo) {
+                        return (minDate != 0 && photo.date < minDate) ||
+                            (maxDate != 0 && photo.date > maxDate);
+                    }), dbPhotos.end());
+    }
+
     /**
      * Assign a pathname to each photo, returning a new copy of dbPhotos with
      * invalid photos (those with no disk files) removed.
@@ -217,10 +240,10 @@ namespace {
         // Keep only photos of the right rating and date range.
         std::vector<Photo> dbPhotos = database.getAllPhotos();
         std::cout << "Photos in database: " << dbPhotos.size() << '\n';
-        // dbPhotos = filter_photos_by_rating(dbPhotos, args.min_rating)
-        // print("Photos after rating filter: %d" % (len(dbPhotos),))
-        // dbPhotos = filter_photos_by_date(dbPhotos, args.min_days, args.max_days)
-        // print("Photos after date filter: %d" % (len(dbPhotos),))
+        filterPhotosByRating(dbPhotos, config);
+        std::cout << "Photos after rating filter: " << dbPhotos.size() << '\n';
+        filterPhotosByDate(dbPhotos, config);
+        std::cout << "Photos after date filter: " << dbPhotos.size() << '\n';
 
         // Find a pathname for each photo.
         dbPhotos = assignPhotoPathnames(database, config, dbPhotos, diskPathnames);

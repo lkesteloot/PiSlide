@@ -12,3 +12,12 @@ slide_transition_time = 2
 # automatically resumes, in seconds:
 max_pause_time = 3600
 
+# Minimum photo rating (1-5) to show.
+min_rating = 3
+
+# Minimum age of photos to show, in days, or 0 for no limit.
+min_days = 0
+
+# Maximum age of photos to show, in days, or 0 for no limit.
+max_days = 0
+

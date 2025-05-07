@@ -34,6 +34,21 @@ struct Config final {
     float maxPauseTime;
 
     /**
+     * Minimum photo rating (1-5) to show.
+     */
+    int minRating;
+
+    /**
+     * Minimum age of photos to show, in days, or 0 for no limit.
+     */
+    int minDays;
+
+    /**
+     * Maximum age of photos to show, in days, or 0 for no limit.
+     */
+    int maxDays;
+
+    /**
      * Set default values.
      */
     Config();
