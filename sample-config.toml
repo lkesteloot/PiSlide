@@ -21,3 +21,10 @@ min_days = 0
 # Maximum age of photos to show, in days, or 0 for no limit.
 max_days = 0
 
+# Directories to skip altogether.
+unwanted_dirs = [
+    ".thumbnails",
+    ".small",
+    "Broken",
+    "Private",
+]

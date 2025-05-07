@@ -58,17 +58,13 @@ bool Config::readConfigFile(std::filesystem::path const &pathname) {
             this->maxDays = *maxDays;
         }
 
-        /*
-        // Get array of strings
-        if (auto servers = config["servers"].as_array()) {
-            std::cout << "Servers:\n";
-            for (const auto& val : *servers) {
-                if (auto s = val.value<std::string>())
-                    std::cout << "  - " << *s << "\n";
+        if (auto unwantedDirs = config["unwanted_dirs"].as_array()) {
+            for (auto const &dir : *unwantedDirs) {
+                if (auto s = dir.value<std::string>()) {
+                    this->unwantedDirs.insert(*s);
+                }
             }
         }
-        */
-
     } catch (toml::parse_error const &err) {
         std::cerr << "Problem with config file " << pathname << ":\n"
                 << "  " << err.description() << '\n'

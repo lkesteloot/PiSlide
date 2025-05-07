@@ -29,16 +29,6 @@ namespace {
     constexpr int MAX_FILE_WARNING_COUNT = 10;
 
     /**
-     * Directories to skip altogether. TODO move to config.
-     */
-    std::set<std::filesystem::path> UNWANTED_DIRS = {
-        ".thumbnails",
-        ".small",
-        "Broken",
-        "Private",
-    };
-
-    /**
      * Valid image file extensions. Must be lower case.
      */
     std::set<std::string> IMAGE_EXTENSIONS = {
@@ -66,7 +56,8 @@ namespace {
      * Gets a set of all pathnames in the image directory. These are relative to the
      * passed-in root dir.
      */
-    std::set<std::string> traverseDirectoryTree(std::filesystem::path const &rootDir) {
+    std::set<std::string> traverseDirectoryTree(Config const &config) {
+        auto rootDir = config.rootDir;
         std::set<std::string> pathnames;
 
         if (rootDir.string().ends_with("/")) {
@@ -91,7 +82,7 @@ namespace {
                         }
                     }
                 } else if (entry.is_directory()) {
-                    if (UNWANTED_DIRS.contains(path.filename())) {
+                    if (config.unwantedDirs.contains(path.filename())) {
                         // Don't recurse.
                         itr.disable_recursion_pending();
                     }
@@ -225,7 +216,7 @@ namespace {
         // TODO upgrade the schema.
 
         // Recursively read the photo tree from the disk.
-        std::set<std::string> diskPathnames = traverseDirectoryTree(config.rootDir);
+        std::set<std::string> diskPathnames = traverseDirectoryTree(config);
         std::cout << "Photos on disk: " << diskPathnames.size() << '\n';
 
         // TODO optionally resize images.

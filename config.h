@@ -3,6 +3,7 @@
 
 #include <string>
 #include <filesystem>
+#include <set>
 
 /**
  * Holds all configurations. This includes:
@@ -47,6 +48,11 @@ struct Config final {
      * Maximum age of photos to show, in days, or 0 for no limit.
      */
     int maxDays;
+
+    /**
+     * Directories to skip.
+     */
+    std::set<std::filesystem::path> unwantedDirs;
 
     /**
      * Set default values.
