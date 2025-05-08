@@ -8,3 +8,4 @@ resources
 *.dSYM
 .idea
 config.toml
+build
