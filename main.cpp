@@ -24,6 +24,7 @@
 #include "executor.h"
 #include "slidecache.h"
 #include "config.h"
+#include "util.h"
 
 namespace {
     constexpr int MAX_FILE_WARNING_COUNT = 10;
@@ -111,9 +112,9 @@ namespace {
 
     // Keep photos in date range.
     void filterPhotosByDate(std::vector<Photo> &dbPhotos, Config const &config) {
-        time_t currentTime = std::time(0);
-        long maxDate = config.minDays == 0 ? 0 : currentTime - config.minDays*24*60*60;
-        long minDate = config.maxDays == 0 ? 0 : currentTime - config.maxDays*24*60*60;
+        time_t now = nowEpoch();
+        long maxDate = config.minDays == 0 ? 0 : now - config.minDays*24*60*60;
+        long minDate = config.maxDays == 0 ? 0 : now - config.maxDays*24*60*60;
 
         dbPhotos.erase(std::remove_if(dbPhotos.begin(), dbPhotos.end(),
                     [minDate, maxDate](Photo const &photo) {

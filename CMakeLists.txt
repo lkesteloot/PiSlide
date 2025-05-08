@@ -5,6 +5,16 @@
 # Need 3.16 for good C++23 support.
 cmake_minimum_required(VERSION 3.16)
 
+# Fetch and build cpr (HTTP library).
+include(FetchContent)
+FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/libcpr/cpr.git
+                         GIT_TAG 1.11.2) # https://github.com/libcpr/cpr/releases
+FetchContent_MakeAvailable(cpr)
+
+# Fetch and build nlohmann JSON.
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
+FetchContent_MakeAvailable(json)
+
 # Name of the project, using C++.
 project(PiSlide LANGUAGES CXX)
 
@@ -27,7 +37,7 @@ target_include_directories(pislide PRIVATE "$ENV{HOME}/others/raylib/src")
 target_link_directories(pislide PRIVATE "$ENV{HOME}/others/raylib/src")
 
 # Libraries we need.
-target_link_libraries(pislide PRIVATE raylib sqlite3)
+target_link_libraries(pislide PRIVATE raylib sqlite3 cpr::cpr nlohmann_json::nlohmann_json)
 if(APPLE)
     target_link_libraries(pislide PRIVATE
         "-framework OpenGL"
@@ -43,13 +53,13 @@ endif()
 # Custom run target. Need X Windows on Linux.
 if(APPLE)
     add_custom_target(run
-        COMMAND ./pislide
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/pislide
         DEPENDS pislide
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
 elseif(UNIX)
     add_custom_target(run
-        COMMAND sudo xinit ./pislide
+        COMMAND sudo xinit ${CMAKE_CURRENT_BINARY_DIR}/pislide
         DEPENDS pislide
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )

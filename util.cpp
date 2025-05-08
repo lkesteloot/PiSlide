@@ -24,11 +24,14 @@ float interpolate(float a, float b, float t) {
     return a + (b - a)*t;
 }
 
-double now() {
+double nowArbitrary() {
     std::chrono::duration<double> now = std::chrono::steady_clock::now().time_since_epoch();
     return now.count();
 }
 
+time_t nowEpoch() {
+    return std::time(0);
+}
 
 std::shared_ptr<Image> makeImageSharedPtr(Image image) {
     return std::shared_ptr<Image>(new Image(image), deleteImage);

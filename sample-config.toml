@@ -28,3 +28,10 @@ unwanted_dirs = [
     "Broken",
     "Private",
 ]
+
+# 511.org configuration.
+[511org]
+token = ""
+agency = "SF"
+stop_code = "12345"
+

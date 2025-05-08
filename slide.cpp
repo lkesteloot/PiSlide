@@ -126,7 +126,7 @@ void Slide::draw(TextWriter &textWriter, Texture const &starTexture, int screenW
 }
 
 void Slide::touch() {
-    mLastUsed = now();
+    mLastUsed = nowArbitrary();
 }
 
 std::ostream &operator<<(std::ostream &os, Slide const &slide) {

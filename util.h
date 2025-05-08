@@ -1,10 +1,11 @@
 
 #pragma once
 
-#include "raylib.h"
-
+#include <ctime>
 #include <chrono>
 #include <memory>
+
+#include "raylib.h"
 
 /**
  * For timing stuff we do, like loading an image.
@@ -25,7 +26,12 @@ float interpolate(float a, float b, float t);
 /**
  * Time in seconds since some arbitrary time.
  */
-double now();
+double nowArbitrary();
+
+/**
+ * Time in seconds since the epoch.
+ */
+time_t nowEpoch();
 
 /**
  * Make shared_ptr versions of raylib structures. When the last reference

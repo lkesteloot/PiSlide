@@ -35,6 +35,12 @@ struct Config final {
     float maxPauseTime;
 
     /**
+     * Maximum amount of time the bus information will be shown before it
+     * automatically turns off, in seconds:
+     */
+    float maxBusTime;
+
+    /**
      * Minimum photo rating (1-5) to show.
      */
     int minRating;
@@ -48,6 +54,22 @@ struct Config final {
      * Maximum age of photos to show, in days, or 0 for no limit.
      */
     int maxDays;
+
+    /**
+     * Token for the 511.org API.
+     */
+    std::string bus511orgToken;
+
+    /**
+     * The 511.org agency (e.g., "SF" for San Francisco MUNI) whose transit information
+     * we want to fetch.
+     */
+    std::string bus511orgAgency;
+
+    /**
+     * The bus stop code whose transit information we want to fetch.
+     */
+    std::string bus511orgStopCode;
 
     /**
      * Directories to skip.

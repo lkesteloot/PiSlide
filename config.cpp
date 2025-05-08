@@ -23,39 +23,51 @@ namespace {
 }
 
 Config::Config() :
-    slideDisplayTime(12), slideTransitionTime(2), maxPauseTime(60*60), minRating(3),
+    slideDisplayTime(12), slideTransitionTime(2), maxPauseTime(60*60), maxBusTime(60*60), minRating(3),
     minDays(0), maxDays(0) {}
 
 bool Config::readConfigFile(std::filesystem::path const &pathname) {
     try {
         auto config = toml::parse_file(pathname.string());
 
-        if (auto rootDir = config["root_dir"].value<std::string>()) {
-            this->rootDir = *rootDir;
+        if (auto value = config["root_dir"].value<std::string>()) {
+            this->rootDir = *value;
         }
 
-        if (auto slideDisplayTime = config["slide_display_time"].value<float>()) {
-            this->slideDisplayTime = *slideDisplayTime;
+        if (auto value = config["slide_display_time"].value<float>()) {
+            this->slideDisplayTime = *value;
         }
 
-        if (auto slideTransitionTime = config["slide_transition_time"].value<float>()) {
-            this->slideTransitionTime = *slideTransitionTime;
+        if (auto value = config["slide_transition_time"].value<float>()) {
+            this->slideTransitionTime = *value;
         }
 
-        if (auto maxPauseTime = config["max_pause_time"].value<float>()) {
-            this->maxPauseTime = *maxPauseTime;
+        if (auto value = config["max_pause_time"].value<float>()) {
+            this->maxPauseTime = *value;
         }
 
-        if (auto minRating = config["min_rating"].value<int>()) {
-            this->minRating = *minRating;
+        if (auto value = config["min_rating"].value<int>()) {
+            this->minRating = *value;
         }
 
-        if (auto minDays = config["min_days"].value<int>()) {
-            this->minDays = *minDays;
+        if (auto value = config["min_days"].value<int>()) {
+            this->minDays = *value;
         }
 
-        if (auto maxDays = config["max_days"].value<int>()) {
-            this->maxDays = *maxDays;
+        if (auto value = config["max_days"].value<int>()) {
+            this->maxDays = *value;
+        }
+
+        if (auto value = config.at_path("511org.token").value<std::string>()) {
+            this->bus511orgToken = *value;
+        }
+
+        if (auto value = config.at_path("511org.agency").value<std::string>()) {
+            this->bus511orgAgency = *value;
+        }
+
+        if (auto value = config.at_path("511org.stop_code").value<std::string>()) {
+            this->bus511orgStopCode = *value;
         }
 
         if (auto unwantedDirs = config["unwanted_dirs"].as_array()) {

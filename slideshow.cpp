@@ -28,21 +28,23 @@ void Slideshow::prefetch() {
 
 void Slideshow::move() {
     // Amount of time since last frame.
-    double frameTime = now();
-    double deltaTime = mPreviousFrameTime == 0 ? 0 : frameTime - mPreviousFrameTime;
-    mPreviousFrameTime = frameTime;
+    double now = nowArbitrary();
+    double deltaTime = mPreviousFrameTime == 0 ? 0 : now - mPreviousFrameTime;
+    mPreviousFrameTime = now;
 
     // Auto-disable paused after a while.
-    if (mPaused && mPauseStartTime != 0 && now() - mPauseStartTime >= mConfig.maxPauseTime) {
+    if (mPaused && mPauseStartTime != 0 && now - mPauseStartTime >= mConfig.maxPauseTime) {
         mPaused = false;
         mPauseStartTime = 0;
     }
 
-    /*
     // Auto-disable bus after a while.
-    if self.showing_bus && self.bus_start_time is not None && time.time() - self.bus_start_time >= MAX_BUS_SECONDS:
-        self.set_show_bus(false)
+    if (mShowingBus && mBusStartTime != 0 && now - mBusStartTime >= mConfig.maxBusTime) {
+        mShowingBus = false;
+        mBusStartTime = 0;
+    }
 
+    /*
     // Auto-disable Twilio after a while.
     if self.fetching_twilio && self.twilio_start_time is not None && time.time() - self.twilio_start_time >= MAX_TWILIO_SECONDS:
         self.set_fetch_twilio(false)
@@ -69,6 +71,7 @@ void Slideshow::draw(Texture const &starTexture) {
     ClearBackground(BLACK);
 
     float fade = mDebug ? 0.3f : 1.0f;
+    Color fadeColor = Fade(WHITE, fade);
 
     // Check configured here because there's a chance that we'll
     // get a loaded slide from the loader between the move and
@@ -92,7 +95,10 @@ void Slideshow::draw(Texture const &starTexture) {
     }
 
     // Upper-right:
-    drawTime(Fade(WHITE, fade));
+    drawTime(fadeColor);
+    if (mShowingBus) {
+        drawBus(fadeColor);
+    }
 
     EndDrawing();
 }
@@ -203,7 +209,7 @@ void Slideshow::handleKeyboard() {
         } else if (ch == 'e') {
             // slideshow.prompt_email()
         } else if (ch == 'b') {
-            // slideshow.toggle_bus()
+            toggleBus();
         } else if (ch == 'T') {
             // slideshow.toggle_twilio()
         } else if (ch >= '1' and ch <= '5') {
@@ -236,11 +242,16 @@ void Slideshow::jumpRelative(int deltaSlide) {
 
 void Slideshow::togglePause() {
     mPaused = !mPaused;
-    mPauseStartTime = mPaused ? now() : 0;
+    mPauseStartTime = mPaused ? nowArbitrary() : 0;
 }
 
 void Slideshow::toggleDebug() {
     mDebug = !mDebug;
+}
+
+void Slideshow::toggleBus() {
+    mShowingBus = !mShowingBus;
+    mBusStartTime = mShowingBus ? nowArbitrary() : 0;
 }
 
 void Slideshow::drawTime(Color color) {
@@ -299,6 +310,43 @@ void Slideshow::drawDebug() {
         mTextWriter.write(ss.str(), pos, FONT_SIZE, color, TextWriter::Alignment::START, TextWriter::Alignment::START);
         pos.y += FONT_SIZE;
     }
+}
+
+void Slideshow::drawBus(Color color) {
+    // Fetch the most recent info.
+    std::vector<time_t> times = mBusInfo.getTimes(mConfig);
+
+    std::stringstream ss;
+    ss << "Bus arrivals: ";
+
+    if (times.empty()) {
+        if (nowArbitrary() - mBusStartTime <= 1) {
+            // If we just turned it on, don't show anything, it'll flicker.
+            return;
+        } else {
+            // While loading.
+            ss << ". . .";
+        }
+    } else {
+        bool first = true;
+        time_t now = nowEpoch();
+        for (time_t time : times) {
+            if (first) {
+                first = false;
+            } else {
+                ss << ", ";
+            }
+            int minutes = (time - now) / 60;
+            if (minutes < 1) {
+                ss << "arriving";
+            } else {
+                ss << minutes << " min";
+            }
+        }
+    }
+
+    mTextWriter.write(ss.str().c_str(), Vector2 { mScreenWidth - DISPLAY_MARGIN, DISPLAY_MARGIN + 60 },
+            48, color, TextWriter::Alignment::END, TextWriter::Alignment::START);
 }
 
 void Slideshow::rotatePhoto(int degrees) {

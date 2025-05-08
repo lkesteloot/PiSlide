@@ -84,4 +84,22 @@ public:
     std::optional<RESPONSE> get() {
         return mResponseQueue.try_dequeue();
     }
+
+    /**
+     * Drain the response queue and return the most recent response, if any.
+     */
+    std::optional<RESPONSE> getMostRecent() {
+        std::optional<RESPONSE> response;
+
+        while (true) {
+            std::optional<RESPONSE> tryResponse = get();
+            if (tryResponse.has_value()) {
+                response = tryResponse;
+            } else {
+                break;
+            }
+        }
+
+        return response;
+    }
 };

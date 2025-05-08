@@ -8,6 +8,7 @@
 #include "slide.h"
 #include "slidecache.h"
 #include "textwriter.h"
+#include "businfo.h"
 
 /**
  * Runs the whole slideshow (animates and draws slides, handles user input, ...).
@@ -20,10 +21,13 @@ class Slideshow final {
     Database const &mDatabase;
     TextWriter mTextWriter;
     SlideCache mSlideCache;
+    BusInfo mBusInfo;
     double mPreviousFrameTime = 0;
     double mTime = 0;
     bool mPaused = false;
     double mPauseStartTime = 0;
+    bool mShowingBus = false;
+    double mBusStartTime = 0;
     bool mDebug = false;
     bool mQuit = false;
 
@@ -54,11 +58,13 @@ class Slideshow final {
 
     // Draw various things.
     void drawTime(Color color);
+    void drawBus(Color color);
     void drawDebug();
 
     // Control the slideshow.
     void jumpRelative(int deltaPhoto);
     void togglePause();
+    void toggleBus();
     void toggleDebug();
 
     // Modify the slide.
