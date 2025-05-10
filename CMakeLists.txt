@@ -1,4 +1,6 @@
 
+# sudo apt install -y cmake libssl-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libsqlite3-dev
+
 # Configure, build, and run:
 # cmake -S . -B build && cmake --build build --target run --parallel
 
@@ -14,6 +16,14 @@ FetchContent_MakeAvailable(cpr)
 # Fetch and build nlohmann JSON.
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
 FetchContent_MakeAvailable(json)
+
+# Fetch and build raylib.
+FetchContent_Declare(raylib GIT_REPOSITORY https://github.com/raysan5/raylib.git
+                            GIT_TAG 5.5) # https://github.com/raysan5/raylib/releases
+set(BUILD_EXAMPLES OFF)
+set(PLATFORM Desktop)
+set(GRAPHICS GRAPHICS_API_OPENGL_21)
+FetchContent_MakeAvailable(raylib)
 
 # Name of the project, using C++.
 project(PiSlide LANGUAGES CXX)
@@ -32,12 +42,8 @@ add_executable(pislide ${SOURCES})
 # Strict compile options.
 target_compile_options(pislide PRIVATE -Wall -Werror -g)
 
-# Add raylib.
-target_include_directories(pislide PRIVATE "$ENV{HOME}/others/raylib/src")
-target_link_directories(pislide PRIVATE "$ENV{HOME}/others/raylib/src")
-
 # Libraries we need.
-target_link_libraries(pislide PRIVATE raylib sqlite3 cpr::cpr nlohmann_json::nlohmann_json)
+target_link_libraries(pislide PRIVATE raylib sqlite3 cpr::cpr nlohmann_json::nlohmann_json raylib)
 if(APPLE)
     target_link_libraries(pislide PRIVATE
         "-framework OpenGL"
