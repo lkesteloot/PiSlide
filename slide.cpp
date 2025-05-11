@@ -84,7 +84,9 @@ void Slide::move(Config const &config, bool paused, bool promptingEmail, double 
     touch();
 }
 
-void Slide::draw(TextWriter &textWriter, Texture const &starTexture, int screenWidth, int screenHeight, float fade) {
+void Slide::draw(Config const &config, TextWriter &textWriter, Texture const &starTexture,
+        int screenWidth, int screenHeight, float opacity) {
+
     // Draw the photo.
     float scale = mActualZoom*mActualWidth/mTexture.width;
     // Negate angle to be compatible with Python version and data in database:
@@ -97,30 +99,36 @@ void Slide::draw(TextWriter &textWriter, Texture const &starTexture, int screenW
     float photoCenterY = mTexture.height*scale/2;
     float x = screenCenterX - (photoCenterX*c - photoCenterY*s);
     float y = screenCenterY - (photoCenterX*s + photoCenterY*c);
-    DrawTextureEx(mTexture, Vector2 { x, y }, angle, scale, Fade(WHITE, mActualAlpha*fade));
+    DrawTextureEx(mTexture, Vector2 { x, y }, angle, scale, Fade(WHITE, mActualAlpha*opacity));
 
-    // Square the alpha to bias towards transparent, because overlapping text
-    // looks bad and we want more transparency during the cross-fade.
-    Color color = Fade(WHITE, mActualAlpha*mActualAlpha*fade);
-    textWriter.write(mPhoto.label, Vector2 { screenWidth/2.0f, screenHeight - 320.0f },
-            48, color, TextWriter::Alignment::CENTER, TextWriter::Alignment::START);
-    textWriter.write(mPhoto.displayDate, Vector2 { screenWidth/2.0f, screenHeight - 265.0f },
-            32, color, TextWriter::Alignment::CENTER, TextWriter::Alignment::START);
+    // We're drawing bottom to top.
+    y = screenHeight - DISPLAY_MARGIN;
 
     // Draw the rating stars.
+    y -= STAR_SIZE;
     int rating = mPhoto.rating;
     if (rating != 3) {
         float starScale = STAR_SIZE / starTexture.width;
-        Color starColor = Fade(WHITE, 0.5*mActualAlpha*mActualAlpha*fade);
+        Color starColor = Fade(WHITE, 0.5*mActualAlpha*mActualAlpha*opacity);
 
         for (int i = 0; i < rating; i++) {
             Vector2 position {
                 .x = screenWidth/2 + (-(rating - 1)/2.0f + i)*STAR_SIZE*1.2f - STAR_SIZE/2.0f,
-                .y = screenHeight - 220.0f,
+                .y = y,
             };
             DrawTextureEx(starTexture, position, 0, starScale, starColor);
         }
     }
+    y -= 20;
+
+    // Square the alpha to bias towards transparent, because overlapping text
+    // looks bad and we want more transparency during the cross-fade.
+    Color color = Fade(WHITE, mActualAlpha*mActualAlpha*opacity);
+    Rectangle pos = textWriter.write(mPhoto.displayDate, Vector2 { screenWidth/2.0f, y },
+            32, color, TextWriter::Alignment::CENTER, TextWriter::Alignment::END);
+    y -= 4 + pos.height;
+    textWriter.write(mPhoto.label, Vector2 { screenWidth/2.0f, y },
+            48, color, TextWriter::Alignment::CENTER, TextWriter::Alignment::END);
 
     touch();
 }

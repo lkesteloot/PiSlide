@@ -38,9 +38,10 @@ public:
     };
 
     /**
-     * Write the text at the given position, size, color, and alignment.
+     * Write the text at the given position, size, color, and alignment. Return the
+     * rectangle on screen where the text was written.
      */
-    void write(std::string const &text,
+    Rectangle write(std::string const &text,
                Vector2 position,
                float fontSize,
                Color color,

@@ -79,10 +79,10 @@ void Slideshow::draw(Texture const &starTexture) {
     // been positioned. Skip drawing in case the bad positioning
     // causes problems (despite zero alpha).
     if (cs.currentSlide && cs.currentSlide->configured()) {
-        cs.currentSlide->draw(mTextWriter, starTexture, mScreenWidth, mScreenHeight, fade);
+        cs.currentSlide->draw(mConfig, mTextWriter, starTexture, mScreenWidth, mScreenHeight, fade);
     }
     if (cs.nextSlide && cs.nextSlide->configured()) {
-        cs.nextSlide->draw(mTextWriter, starTexture, mScreenWidth, mScreenHeight, fade);
+        cs.nextSlide->draw(mConfig, mTextWriter, starTexture, mScreenWidth, mScreenHeight, fade);
     }
 
     // Reset any slide we didn't draw so that next time it's drawn it can jump

@@ -106,9 +106,10 @@ public:
     void move(Config const &config, bool paused, bool promptingEmail, double time);
 
     /**
-     * Draw the slide, its labels, and the star rating. Dim by the "fade" (0-1), where 1 means not faded.
+     * Draw the slide, its labels, and the star rating. Opacity is 0 to 1.
      */
-    void draw(TextWriter &textWriter, Texture const &starTexture, int screenWidth, int screenHeight, float fade);
+    void draw(Config const &config, TextWriter &textWriter, Texture const &starTexture,
+            int screenWidth, int screenHeight, float opacity);
 
     /**
      * Pretend we've not been drawn so that the next draw will start from scratch.

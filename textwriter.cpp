@@ -23,7 +23,7 @@ std::shared_ptr<Font> TextWriter::getFont(float fontSize) {
     return font;
 }
 
-void TextWriter::write(std::string const &text,
+Rectangle TextWriter::write(std::string const &text,
         Vector2 position,
         float fontSize,
         Color color,
@@ -32,9 +32,9 @@ void TextWriter::write(std::string const &text,
 
     std::shared_ptr<Font> font = getFont(fontSize);
 
-    if (horizontal != Alignment::START || vertical != Alignment::START) {
-        Vector2 size = MeasureTextEx(*font, text.c_str(), fontSize, SPACING);
+    Vector2 size = MeasureTextEx(*font, text.c_str(), fontSize, SPACING);
 
+    if (horizontal != Alignment::START || vertical != Alignment::START) {
         switch (horizontal) {
             case Alignment::START:
                 // Nothing.
@@ -65,6 +65,13 @@ void TextWriter::write(std::string const &text,
     }
 
     DrawTextEx(*font, text.c_str(), position, fontSize, SPACING, color);
+
+    return Rectangle {
+        .x = position.x,
+        .y = position.y,
+        .width = size.x,
+        .height = size.y,
+    };
 }
 
 std::shared_ptr<Image> TextWriter::makeImage(std::string const &text, float fontSize, Color color) {

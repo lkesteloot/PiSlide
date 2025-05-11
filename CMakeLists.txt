@@ -2,6 +2,7 @@
 # sudo apt install -y cmake libssl-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libsqlite3-dev
 
 # Configure, build, and run:
+# Add "-G Ninja" to first command if you have ninja installed.
 # cmake -S . -B build && cmake --build build --target run --parallel
 
 # Need 3.16 for good C++23 support.

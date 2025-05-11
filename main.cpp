@@ -258,7 +258,7 @@ namespace {
 
         // SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI | FLAG_FULLSCREEN_MODE);
         SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
-        InitWindow(0, 0, "PiSlide");
+        InitWindow(1500, 800, "PiSlide");
 
         // This is really the window size:
         int screenWidth = GetScreenWidth();
