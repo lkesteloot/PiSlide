@@ -26,6 +26,11 @@ set(PLATFORM Desktop)
 set(GRAPHICS GRAPHICS_API_OPENGL_21)
 FetchContent_MakeAvailable(raylib)
 
+# Fetch and build toml++.
+FetchContent_Declare(tomlplusplus GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
+                                  GIT_TAG v3.4.0) # https://github.com/marzer/tomlplusplus/releases
+FetchContent_MakeAvailable(tomlplusplus)
+
 # Name of the project, using C++.
 project(PiSlide LANGUAGES CXX)
 
@@ -44,7 +49,7 @@ add_executable(pislide ${SOURCES})
 target_compile_options(pislide PRIVATE -Wall -Werror -g)
 
 # Libraries we need.
-target_link_libraries(pislide PRIVATE raylib sqlite3 cpr::cpr nlohmann_json::nlohmann_json raylib)
+target_link_libraries(pislide PRIVATE raylib sqlite3 cpr::cpr nlohmann_json::nlohmann_json raylib tomlplusplus::tomlplusplus)
 if(APPLE)
     target_link_libraries(pislide PRIVATE
         "-framework OpenGL"
