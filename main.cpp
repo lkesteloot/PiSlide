@@ -256,9 +256,8 @@ namespace {
         std::mt19937 gen(rd());
         std::ranges::shuffle(dbPhotos, gen);
 
-        // SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI | FLAG_FULLSCREEN_MODE);
-        SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
-        InitWindow(1500, 800, "PiSlide");
+        // Open the display.
+        InitWindow(config.windowWidth, config.windowHeight, "PiSlide");
 
         // This is really the window size:
         int screenWidth = GetScreenWidth();

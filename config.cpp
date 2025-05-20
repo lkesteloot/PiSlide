@@ -24,7 +24,7 @@ namespace {
 
 Config::Config() :
     slideDisplayTime(12), slideTransitionTime(2), maxPauseTime(60*60), maxBusTime(60*60), minRating(3),
-    minDays(0), maxDays(0) {}
+    minDays(0), maxDays(0), windowWidth(0), windowHeight(0) {}
 
 bool Config::readConfigFile(std::filesystem::path const &pathname) {
     try {
@@ -56,6 +56,14 @@ bool Config::readConfigFile(std::filesystem::path const &pathname) {
 
         if (auto value = config["max_days"].value<int>()) {
             this->maxDays = *value;
+        }
+
+        if (auto value = config["window_width"].value<int>()) {
+            this->windowWidth = *value;
+        }
+
+        if (auto value = config["window_height"].value<int>()) {
+            this->windowHeight = *value;
         }
 
         if (auto value = config.at_path("511org.token").value<std::string>()) {

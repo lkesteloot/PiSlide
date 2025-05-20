@@ -21,6 +21,12 @@ min_days = 0
 # Maximum age of photos to show, in days, or 0 for no limit.
 max_days = 0
 
+# Width of window, or 0 for full screen.
+window_width = 0
+
+# Height of window, or 0 for full screen.
+window_height = 0
+
 # Directories to skip altogether.
 unwanted_dirs = [
     ".thumbnails",

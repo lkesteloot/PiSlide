@@ -56,6 +56,16 @@ struct Config final {
     int maxDays;
 
     /**
+     * Width of window, or 0 for full screen.
+     */
+    int windowWidth;
+
+    /**
+     * Height of window, or 0 for full screen.
+     */
+    int windowHeight;
+
+    /**
      * Token for the 511.org API.
      */
     std::string bus511orgToken;

@@ -23,7 +23,7 @@ FetchContent_Declare(raylib GIT_REPOSITORY https://github.com/raysan5/raylib.git
                             GIT_TAG 5.5) # https://github.com/raysan5/raylib/releases
 set(BUILD_EXAMPLES OFF)
 set(PLATFORM Desktop)
-set(GRAPHICS GRAPHICS_API_OPENGL_21)
+set(OPENGL_VERSION 2.1)
 FetchContent_MakeAvailable(raylib)
 
 # Fetch and build toml++.
