@@ -6,6 +6,23 @@
 
 namespace {
     /**
+     * If the image is bigger than maxSize in width or height, it is
+     * resized to fit, keeping its aspect ratio.
+     */
+    void resizeImageToFit(Image *image, int maxSize) {
+        int width = image->width;
+        int height = image->height;
+
+        if (width >= height && width > maxSize) {
+            int newHeight = (height*maxSize + width/2)/width;
+            ImageResize(image, maxSize, newHeight);
+        } else if (height >= width && height > maxSize) {
+            int newWidth = (width*maxSize + height/2)/height;
+            ImageResize(image, newWidth, maxSize);
+        }
+    }
+
+    /**
      * Replace the "size" pixels at the border of the image
      * with transparent pixels.
      */
@@ -76,8 +93,12 @@ ImageLoader::Response ImageLoader::loadPhotoInThread(Request const &request) {
     Image image = LoadImage(request.photo.absolutePathname.c_str());
     auto endTime = std::chrono::high_resolution_clock::now();
 
+
     std::shared_ptr<Image> imagePtr;
     if (IsImageValid(image)) {
+        // Save memory and make sure we don't exceed GPU texture size limits.
+        resizeImageToFit(&image, MAX_TEXTURE_SIZE);
+
         // We don't get good anti-aliasing at the edge of the image, so make
         // the border transparent, which anti-aliases much better.
         drawTransparentBorder(&image, TRANSPARENT_BORDER);

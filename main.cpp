@@ -180,7 +180,7 @@ namespace {
         std::vector<Photo> goodPhotos;
 
         for (auto &photo : dbPhotos) {
-            if (true || photo.pathname.find("Florence") != std::string::npos) {
+            if (true || photo.pathname.find("P101082") != std::string::npos) {
                 goodPhotos.push_back(photo);
             }
         }
