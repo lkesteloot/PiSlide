@@ -35,6 +35,16 @@ unwanted_dirs = [
     "Private",
 ]
 
+# Directory parts to not display in the label.
+bad_parts = [
+    "Published", "Originals", "Unsorted"
+]
+
+# If a pathname part has this prefix (case-sensitive), the whole part is ignored
+# when displaying the label.
+bad_file_prefixes = ["DSC_", "PICT", "100_", "IMG_", "P101", "VIP_", "Image",
+        "pick", "dcp_", "DSCF"]
+
 # 511.org configuration.
 [511org]
 token = ""

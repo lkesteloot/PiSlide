@@ -1,5 +1,6 @@
 *.log
 *.db
+*.db.old
 *.db-journal
 config.py
 resources

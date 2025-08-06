@@ -87,6 +87,17 @@ struct Config final {
     std::set<std::filesystem::path> unwantedDirs;
 
     /**
+     * Directory parts to not display in the label.
+     */
+    std::set<std::string> badParts;
+
+    /**
+     * If a pathname part has this prefix (case-sensitive), the whole part
+     * is ignored when displaying the label.
+     */
+    std::set<std::string> badFilePrefixes;
+
+    /**
      * Set default values.
      */
     Config();

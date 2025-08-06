@@ -58,6 +58,7 @@ namespace {
 
 namespace Tools {
 
+#ifndef TINYEXIF_NO_XMP_SUPPORT
 	// search string inside a string, case sensitive
 	static const char* strrnstr(const char* haystack, const char* needle, size_t len) {
 		const size_t needle_len(strlen(needle));
@@ -89,6 +90,7 @@ namespace Tools {
 	static double NormD180(double d) {
 		return (d = fmod(d+180.0, 360.0)) < 0 ? d+180.0 : d-180.0;
 	}
+#endif
 
 } // namespace Tools
 

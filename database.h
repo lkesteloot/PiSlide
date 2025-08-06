@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <optional>
 #include <sqlite3.h>
 
 #include "model.h"
@@ -100,8 +101,11 @@ public:
     // Queries.
     void printPersons() const;
     std::vector<Photo> getAllPhotos() const;
+    std::optional<Photo> getPhotoByHashBack(std::string const &hashBack) const;
     std::vector<PhotoFile> getAllPhotoFiles() const;
 
     // Updates.
     void savePhoto(Photo const &photo) const;
+    int32_t insertPhoto(Photo const &photo) const; // Returns ID.
+    void savePhotoFile(PhotoFile const &photoFile) const;
 };

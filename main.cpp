@@ -9,8 +9,12 @@
 #include <set>
 #include <map>
 #include <filesystem>
+#include <fstream>
+#include <sstream>
+#include <chrono>
 
 #include "raylib.h"
+#include "TinyEXIF.h"
 
 /* TODO delete?
 #pragma GCC diagnostic push
@@ -25,6 +29,7 @@
 #include "slidecache.h"
 #include "config.h"
 #include "util.h"
+#include "label.h"
 
 namespace {
     constexpr int MAX_FILE_WARNING_COUNT = 10;
@@ -57,9 +62,9 @@ namespace {
      * Gets a set of all pathnames in the image directory. These are relative to the
      * passed-in root dir.
      */
-    std::set<std::string> traverseDirectoryTree(Config const &config) {
+    std::set<std::filesystem::path> traverseDirectoryTree(Config const &config) {
         auto rootDir = config.rootDir;
-        std::set<std::string> pathnames;
+        std::set<std::filesystem::path> pathnames;
 
         if (rootDir.string().ends_with("/")) {
             throw std::invalid_argument("rootDir must not end with a slash");
@@ -100,6 +105,141 @@ namespace {
         return pathnames;
     }
 
+    /**
+     * Get the modified time of a file. The first in the pair is a string like "January 4, 2009".
+     * The second is the number of seconds since the epoch.
+     */
+    std::pair<std::string,int64_t> getFileDate(std::filesystem::path const &pathname) {
+        // Unreal.
+        std::filesystem::file_time_type time1 = std::filesystem::last_write_time(pathname);
+        auto time2 = time1 - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now();
+        auto time3 = std::chrono::time_point_cast<std::chrono::system_clock::duration>(time2);
+        std::time_t time4 = std::chrono::system_clock::to_time_t(time3);
+        std::tm time5 = *std::localtime(&time4);
+
+        std::ostringstream oss;
+        oss << std::put_time(&time5, "%B %d, %Y");
+        auto time6 = oss.str();
+
+        // Remove leading 0 from day:
+        auto space = time6.find(' ');
+        if (space != std::string::npos && time6[space + 1] == '0') {
+            time6.erase(space + 1, 1);
+        }
+
+        // Now for the epoch time.
+        auto time7 = std::chrono::file_clock::to_sys(time1);
+        auto time8 = time7.time_since_epoch();
+        auto time9 = std::chrono::duration_cast<std::chrono::seconds>(time8).count();
+
+        return std::make_pair(time6, time9);
+    }
+
+    /**
+     * Return the file's rotation in degrees, or 0 if it cannot be determined.
+     * The rotation specifies how much to rotate the loaded image counter-clockwise
+     * in order to display it.
+     */
+    int getFileRotation(std::filesystem::path const &pathname) {
+        int rotation;
+
+        // Open a stream to read just the necessary parts of the image file.
+	std::ifstream istream(pathname, std::ifstream::binary);
+
+	// Parse image EXIF.
+	TinyEXIF::EXIFInfo exif(istream);
+        switch (exif.Fields ? exif.Orientation : 0) {
+                                            // start of data is:
+            case 0: rotation = 0; break;    //   unspecified in EXIF data
+            case 1: rotation = 0; break;    //   upper left of image
+            case 3: rotation = 180; break;  //   lower right of image
+            case 6: rotation = -90; break;  //   upper right of image
+            case 8: rotation = 90; break;   //   lower left of image
+            case 9: rotation = 0; break;    //   undefined
+            default: rotation = 0; break;
+        }
+
+        return rotation;
+    }
+
+    /**
+     * Create a new photo file for this pathname, and optionally a new photo.
+     * Returns the photo ID (new or old).
+     */
+    int32_t handleNewAndRenamedFile(Database const &database,
+            Config const &config,
+            std::filesystem::path const &pathname) {
+
+        std::cout << "    Computing hash for " << pathname << '\n';
+        std::string label = pathnameToLabel(config, pathname);
+
+        // We want the hashes of the original files, not the processed ones.
+        std::filesystem::path absolutePathname = config.rootDir / pathname;
+
+        std::vector<std::byte> imageBytes = readFileBytes(absolutePathname);
+
+        std::string hashAll = sha1Hex(imageBytes.data(), imageBytes.size());
+        int start = std::max(0, (int) imageBytes.size() - 1024);
+        std::string hashBack = sha1Hex(imageBytes.data() + start, imageBytes.size() - start);
+
+        // Create a new photo file.
+        PhotoFile photoFile { pathname, hashAll, hashBack };
+        database.savePhotoFile(photoFile);
+
+        // Now see if this was a renaming of another file.
+        std::optional<Photo> photo = database.getPhotoByHashBack(hashBack);
+        int32_t photoId;
+        if (photo) {
+            // Renamed or moved photo.
+            std::cout << "        Renamed or moved photo.\n";
+            // Leave the timestamp the same, but update the label.
+            photo->label = label;
+            database.savePhoto(*photo);
+            photoId = photo->id;
+        } else {
+            // New photo.
+            std::cout << "        New photo.\n";
+            int rotation = getFileRotation(absolutePathname);
+            std::pair<std::string,int64_t> fileDate = getFileDate(absolutePathname);
+            std::cout << "            Rotation " << rotation << '\n';
+            std::cout << "            Date " << fileDate.first << '\n';
+            Photo newPhoto {
+                .hashBack = hashBack,
+                .rotation = rotation,
+                .rating = 3,
+                .date = fileDate.second,
+                .displayDate = fileDate.first,
+                .label = label,
+            };
+
+            photoId = database.insertPhoto(newPhoto);
+        }
+        std::cout << "            ID = " << photoId << "\n";
+
+        return photoId;
+    }
+
+    /**
+     * Look for new images or images that might have been moved or renamed in the tree.
+     * We must make sure to not lose the metadata (rating, rotation).
+     */
+    void handleNewAndRenamedFiles(Database const &database,
+            Config const &config,
+            std::set<std::filesystem::path> const diskPathnames,
+            std::vector<PhotoFile> const &dbPhotoFiles) {
+
+        // Figure out which pathnames we need to analyze.
+        std::set<std::filesystem::path> pathnamesToDo = diskPathnames;
+        for (PhotoFile const &photoFile : dbPhotoFiles) {
+            pathnamesToDo.erase(photoFile.pathname);
+        }
+
+        std::cout << "Analyzing " << pathnamesToDo.size() << " new or renamed photos...\n";
+        for (std::filesystem::path const &pathname : pathnamesToDo) {
+            handleNewAndRenamedFile(database, config, pathname);
+        }
+    }
+
     // Keep photos of at least this rating.
     void filterPhotosByRating(std::vector<Photo> &dbPhotos, Config const &config) {
         int minRating = config.minRating;
@@ -110,7 +250,9 @@ namespace {
                     }), dbPhotos.end());
     }
 
-    // Keep photos in date range.
+    /**
+     * Keep photos in date range.
+     */
     void filterPhotosByDate(std::vector<Photo> &dbPhotos, Config const &config) {
         time_t now = nowEpoch();
         long maxDate = config.minDays == 0 ? 0 : now - config.minDays*24*60*60;
@@ -130,7 +272,7 @@ namespace {
     std::vector<Photo> assignPhotoPathnames(Database const &database,
             Config const &config,
             std::vector<Photo> const &dbPhotos,
-            std::set<std::string> const &diskPathnames) {
+            std::set<std::filesystem::path> const &diskPathnames) {
 
         // Get all photo files. We did this before but have since modified the database.
         std::vector<PhotoFile> dbPhotoFiles = database.getAllPhotoFiles();
@@ -180,7 +322,7 @@ namespace {
         std::vector<Photo> goodPhotos;
 
         for (auto &photo : dbPhotos) {
-            if (true || photo.pathname.find("P101082") != std::string::npos) {
+            if (true || photo.pathname.string().find("P101082") != std::string::npos) {
                 goodPhotos.push_back(photo);
             }
         }
@@ -213,11 +355,10 @@ namespace {
             return 1;
         }
 
-
         // TODO upgrade the schema.
 
         // Recursively read the photo tree from the disk.
-        std::set<std::string> diskPathnames = traverseDirectoryTree(config);
+        std::set<std::filesystem::path> diskPathnames = traverseDirectoryTree(config);
         std::cout << "Photos on disk: " << diskPathnames.size() << '\n';
 
         // TODO optionally resize images.
@@ -226,8 +367,8 @@ namespace {
         std::vector<PhotoFile> dbPhotoFiles = database.getAllPhotoFiles();
         std::cout << "Photo files in database: " << dbPhotoFiles.size() << '\n';
 
-        // TODO Compute missing hashes of photos, add them to database.
-        // handle_new_and_renamed_files(con, diskPathnames, db_photo_files)
+        // Compute missing hashes of photos, add them to database.
+        handleNewAndRenamedFiles(database, config, diskPathnames, dbPhotoFiles);
 
         // Keep only photos of the right rating and date range.
         std::vector<Photo> dbPhotos = database.getAllPhotos();

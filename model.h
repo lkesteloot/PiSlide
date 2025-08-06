@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cstdint>
 #include <string>
+#include <filesystem>
 
 /**
  * Model object for a person and what we know about them.
@@ -24,7 +25,7 @@ struct Photo {
      */
     std::string hashBack;
     /**
-     * In degrees. TODO which direction?
+     * Much to rotate the loaded image counter-clockwise in order to display it, in degrees.
      */
     int32_t rotation;
     /**
@@ -52,8 +53,8 @@ struct Photo {
      * In-memory use only, not stored in database. Refers to the preferred photo file to
      * show for this photo.
      */
-    std::string pathname; // Relative to root path.
-    std::string absolutePathname;
+    std::filesystem::path pathname; // Relative to root path.
+    std::filesystem::path absolutePathname;
 };
 
 std::ostream &operator<<(std::ostream &os, Photo const &photo);
@@ -68,11 +69,11 @@ struct PhotoFile {
      */
     std::string pathname;
     /**
-     * SHA-1 of the entire file.
+     * Hex of the SHA-1 of the entire file.
      */
     std::string hashAll;
     /**
-     * SHA-1 of the last 1 kB of the file.
+     * Hex of the SHA-1 of the last 1 kB of the file.
      */
     std::string hashBack;
 };

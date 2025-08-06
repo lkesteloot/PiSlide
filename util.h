@@ -4,6 +4,10 @@
 #include <ctime>
 #include <chrono>
 #include <memory>
+#include <string>
+#include <vector>
+#include <filesystem>
+#include <cstddef>   // for std::byte
 
 #include "raylib.h"
 
@@ -39,3 +43,31 @@ time_t nowEpoch();
  */
 std::shared_ptr<Image> makeImageSharedPtr(Image image);
 std::shared_ptr<Font> makeFontSharedPtr(Font font);
+
+/**
+ * Split the input at the delimiter, keeping empty parts. Will always
+ * contain at least one part.
+ */
+std::vector<std::string> split(std::string const &input, char delimiter);
+
+/**
+ * Return the pathname without its extension. Removes the dot as well. Does not
+ * count dots at the beginning of the filename as starting an extension.
+ *
+ * Input: a/b/c.d
+ * Output: a/b/c
+ */
+std::string stripExtension(std::string const &pathname);
+
+
+/**
+ * Read all the bytes of a file. Throws runtime_error() if it can't
+ * open or read the file.
+ */
+std::vector<std::byte> readFileBytes(std::filesystem::path const &path);
+
+/**
+ * Compute the hex of the SHA-1 of the bytes.
+ */
+std::string sha1Hex(void const *data, size_t byteCount);
+

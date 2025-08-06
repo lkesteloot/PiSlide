@@ -5,6 +5,8 @@
 
 #include "database.h"
 
+using namespace std::string_literals;
+
 static std::string DATABASE_PATHNAME = "pislide.db";
 static std::string PHOTO_FIELDS = "id, hash_back, rotation, rating, date, display_date, label";
 static std::string PHOTO_FILE_FIELDS = "pathname, hash_all, hash_back";
@@ -69,7 +71,7 @@ void Database::printPersons() const {
 }
 
 std::vector<Photo> Database::getAllPhotos() const {
-    auto stmt = prepare(std::string("SELECT ") + PHOTO_FIELDS + " FROM photo");
+    auto stmt = prepare("SELECT "s + PHOTO_FIELDS + " FROM photo");
     std::vector<Photo> photos;
 
     while (stmt->step()) {
@@ -86,8 +88,26 @@ std::vector<Photo> Database::getAllPhotos() const {
     return photos;
 }
 
+std::optional<Photo> Database::getPhotoByHashBack(std::string const &hashBack) const {
+    auto stmt = prepare("SELECT "s + PHOTO_FIELDS + " FROM photo WHERE hash_back = ?");
+    stmt->bindString(1, hashBack);
+
+    if (stmt->step()) {
+        return std::make_optional<Photo>(
+                stmt->getInt(0),
+                stmt->getString(1),
+                stmt->getInt(2),
+                stmt->getInt(3),
+                stmt->getLong(4),
+                stmt->getString(5),
+                stmt->getString(6));
+    } else {
+        return std::optional<Photo>();
+    }
+}
+
 std::vector<PhotoFile> Database::getAllPhotoFiles() const {
-    auto stmt = prepare(std::string("SELECT ") + PHOTO_FILE_FIELDS + " FROM photo_file");
+    auto stmt = prepare("SELECT "s + PHOTO_FILE_FIELDS + " FROM photo_file");
     std::vector<PhotoFile> photoFiles;
 
     while (stmt->step()) {
@@ -101,7 +121,8 @@ std::vector<PhotoFile> Database::getAllPhotoFiles() const {
 }
 
 void Database::savePhoto(Photo const &photo) const {
-    auto stmt = prepare(std::string("INSERT OR REPLACE INTO photo (") + PHOTO_FIELDS + ") VALUES (?, ?, ?, ?, ?, ?, ?)");
+    auto stmt = prepare("INSERT OR REPLACE INTO photo ("s +
+            PHOTO_FIELDS + ") VALUES (?, ?, ?, ?, ?, ?, ?)");
 
     stmt->bindInt(1, photo.id);
     stmt->bindString(2, photo.hashBack);
@@ -116,3 +137,37 @@ void Database::savePhoto(Photo const &photo) const {
         throw std::invalid_argument("can't execute statement");
     }
 }
+
+int32_t Database::insertPhoto(Photo const &photo) const {
+    auto stmt = prepare("INSERT INTO photo ("s +
+            PHOTO_FIELDS + ") VALUES (NULL, ?, ?, ?, ?, ?, ?)");
+
+    stmt->bindString(1, photo.hashBack);
+    stmt->bindInt(2, photo.rotation);
+    stmt->bindInt(3, photo.rating);
+    stmt->bindLong(4, photo.date);
+    stmt->bindString(5, photo.displayDate);
+    stmt->bindString(6, photo.label);
+
+    auto error = stmt->step();
+    if (error) {
+        throw std::invalid_argument("can't execute statement");
+    }
+
+    return sqlite3_last_insert_rowid(mDb);
+}
+
+void Database::savePhotoFile(PhotoFile const &photoFile) const {
+    auto stmt = prepare("INSERT OR REPLACE INTO photo_file ("s +
+            PHOTO_FILE_FIELDS + ") VALUES (?, ?, ?)");
+
+    stmt->bindString(1, photoFile.pathname);
+    stmt->bindString(2, photoFile.hashAll);
+    stmt->bindString(3, photoFile.hashBack);
+
+    auto error = stmt->step();
+    if (error) {
+        throw std::invalid_argument("can't execute statement");
+    }
+}
+

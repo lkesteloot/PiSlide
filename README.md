@@ -87,6 +87,26 @@ Args:
 * `--min_days DAYS`: Show only photos that are at least `DAYS` old (default no minimum).
 * `--max_days DAYS`: Show only photos that are at most `DAYS` old (default no maximum).
 
+# The C++ version of the software
+
+Build:
+
+```sh
+cmake --build build --parallel
+```
+
+Build and run:
+
+```sh
+cmake --build build --target run --parallel
+```
+
+# Libraries
+
+`TinySHA1.hpp` is from `https://github.com/mohaps/TinySHA1`
+
+`TinyEXIF.cpp` is from `https://github.com/cdcseacave/TinyEXIF`
+
 # Contributing
 
 Conventions in the code:

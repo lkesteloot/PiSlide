@@ -85,6 +85,22 @@ bool Config::readConfigFile(std::filesystem::path const &pathname) {
                 }
             }
         }
+
+        if (auto badParts = config["bad_parts"].as_array()) {
+            for (auto const &part : *badParts) {
+                if (auto s = part.value<std::string>()) {
+                    this->badParts.insert(*s);
+                }
+            }
+        }
+
+        if (auto badFilePrefixes = config["bad_file_prefixes"].as_array()) {
+            for (auto const &prefix : *badFilePrefixes) {
+                if (auto s = prefix.value<std::string>()) {
+                    this->badFilePrefixes.insert(*s);
+                }
+            }
+        }
     } catch (toml::parse_error const &err) {
         std::cerr << "Problem with config file " << pathname << ":\n"
                 << "  " << err.description() << '\n'
@@ -129,7 +145,6 @@ bool Config::isValid() const {
         std::cerr << "Must specify a rootDir" << '\n';
         return false;
     }
-
 
     return true;
 }
