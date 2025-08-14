@@ -413,14 +413,17 @@ namespace {
         // Match Python version FPS.
         SetTargetFPS(40);
 
-        Slideshow slideshow(dbPhotos, screenWidth, screenHeight, config, database);
+        {
+            // Nested scope to delete slideshow before we close the window.
+            Slideshow slideshow(dbPhotos, screenWidth, screenHeight, config, database);
 
-        while (slideshow.loopRunning()) {
-            slideshow.prefetch();
-            slideshow.move();
-            // slideshow.fetch_twilio_photos();
-            slideshow.draw(starTexture);
-            slideshow.handleKeyboard();
+            while (slideshow.loopRunning()) {
+                slideshow.prefetch();
+                slideshow.move();
+                // slideshow.fetch_twilio_photos();
+                slideshow.draw(starTexture);
+                slideshow.handleKeyboard();
+            }
         }
 
         CloseWindow();
