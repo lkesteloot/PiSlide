@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Disable screensaver.
+xset s off
+xset -dpms
+
+# Turn it off if it's running right now.
+xset s reset
+
+# Run slideshow.
+$1
+

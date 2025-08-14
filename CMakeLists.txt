@@ -71,7 +71,7 @@ if(APPLE)
     )
 elseif(UNIX)
     add_custom_target(run
-        COMMAND sudo xinit ${CMAKE_CURRENT_BINARY_DIR}/pislide
+        COMMAND sudo xinit ./RUN_WITHOUT_SCREENSAVER ${CMAKE_CURRENT_BINARY_DIR}/pislide
         DEPENDS pislide
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
