@@ -101,6 +101,22 @@ bool Config::readConfigFile(std::filesystem::path const &pathname) {
                 }
             }
         }
+
+        if (auto value = config.at_path("twilio.sid").value<std::string>()) {
+            this->twilioSid = *value;
+        }
+
+        if (auto value = config.at_path("twilio.token").value<std::string>()) {
+            this->twilioToken = *value;
+        }
+
+        if (auto value = config.at_path("twilio.subdir").value<std::string>()) {
+            this->twilioSubdir = *value;
+        }
+
+        if (auto value = config.at_path("twilio.message").value<std::string>()) {
+            this->twilioMessage = *value;
+        }
     } catch (toml::parse_error const &err) {
         std::cerr << "Problem with config file " << pathname << ":\n"
                 << "  " << err.description() << '\n'

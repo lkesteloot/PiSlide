@@ -222,7 +222,7 @@ void Slideshow::handleKeyboard() {
     // Non-character keys.
     int key = GetKeyPressed();
     if (key != 0) {
-        std::cout << "Got key " << key << '\n'; // TODO remove
+        // std::cout << "Got key " << key << '\n'; // TODO remove
         if (key == KEY_LEFT) {
             jumpRelative(-1);
         } else if (key == KEY_RIGHT) {

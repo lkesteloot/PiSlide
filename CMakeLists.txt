@@ -15,6 +15,7 @@ FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/libcpr/cpr.git
 FetchContent_MakeAvailable(cpr)
 
 # Fetch and build nlohmann JSON.
+# https://github.com/nlohmann/json/releases
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
 FetchContent_MakeAvailable(json)
 
@@ -76,3 +77,24 @@ elseif(UNIX)
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
 endif()
+
+# ----------------------------------------------------------------------------------------
+
+# Define our Twilio test program.
+add_executable(test-twilio
+    "${CMAKE_CURRENT_SOURCE_DIR}/twilio.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/config.cpp")
+
+# Strict compile options.
+target_compile_options(test-twilio PRIVATE -Wall -Werror -g)
+
+# Libraries we need.
+target_link_libraries(test-twilio PRIVATE cpr::cpr nlohmann_json::nlohmann_json tomlplusplus::tomlplusplus)
+
+target_compile_options(test-twilio PRIVATE -DTEST_TWILIO)
+
+add_custom_target(run-test-twilio
+    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test-twilio
+    DEPENDS test-twilio
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)

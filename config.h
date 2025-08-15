@@ -98,6 +98,27 @@ struct Config final {
     std::set<std::string> badFilePrefixes;
 
     /**
+     * Twilio account string ID, or an empty string to disable Twilio.
+     */
+    std::string twilioSid;
+
+    /**
+     * Twilio account token, or an empty string to disable Twilio.
+     */
+    std::string twilioToken;
+
+    /**
+     * Directory below rootDir to store fetched Twilio photos.
+     */
+    std::filesystem::path twilioSubdir;
+
+    /**
+     * Message to display when in party mode. Should display the Twilio
+     * phone number to SMS photos.
+     */
+    std::string twilioMessage;
+
+    /**
      * Set default values.
      */
     Config();

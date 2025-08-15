@@ -92,6 +92,9 @@ Args:
 Build:
 
 ```sh
+# Takes about a minute:
+cmake -B build
+# Takes about a minute:
 cmake --build build --parallel
 ```
 

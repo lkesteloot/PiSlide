@@ -19,6 +19,7 @@ std::vector<long> nextBuses(Config const &config) {
     }
 
     // Fetch the information.
+    // TODO use cpr::Parameters
     auto url = "https://api.511.org/transit/StopMonitoring?api_key="s + config.bus511orgToken +
         "&agency=" + config.bus511orgAgency +
         "&stopCode=" + config.bus511orgStopCode +
@@ -31,6 +32,7 @@ std::vector<long> nextBuses(Config const &config) {
     }
 
     // Parse the information.
+    // TODO fix variable names.
     auto x = nlohmann::json::parse(r.text);
     for (auto const &y : x["ServiceDelivery"]["StopMonitoringDelivery"]["MonitoredStopVisit"]) {
         std::string timestamp = y["MonitoredVehicleJourney"]["MonitoredCall"]["ExpectedArrivalTime"];
