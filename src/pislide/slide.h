@@ -109,7 +109,7 @@ public:
      * Draw the slide, its labels, and the star rating. Opacity is 0 to 1.
      */
     void draw(Config const &config, TextWriter &textWriter, Texture const &starTexture,
-            int screenWidth, int screenHeight, float opacity, bool drawText);
+            int screenWidth, int screenHeight, float opacity, bool drawSlideInfo);
 
     /**
      * Pretend we've not been drawn so that the next draw will start from scratch.

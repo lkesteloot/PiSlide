@@ -16,13 +16,6 @@
 #include "raylib.h"
 #include "TinyEXIF.h"
 
-/* TODO delete?
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-#include "raymath.h"
-#pragma GCC diagnostic pop
-*/
-
 #include "database.h"
 #include "slideshow.h"
 #include "executor.h"
@@ -410,6 +403,10 @@ namespace {
         GenTextureMipmaps(&starTexture);
         SetTextureFilter(starTexture, TEXTURE_FILTER_TRILINEAR);
 
+        // Create the party mode QR code.
+        qrcodegen::QrCode qrCode = qrcodegen::QrCode::encodeText(
+                config.twilioQrCode.c_str(), qrcodegen::QrCode::Ecc::LOW);
+
         // Match Python version FPS.
         SetTargetFPS(40);
 
@@ -421,7 +418,7 @@ namespace {
                 slideshow.prefetch();
                 slideshow.move();
                 // slideshow.fetch_twilio_photos();
-                slideshow.draw(starTexture);
+                slideshow.draw(starTexture, qrCode);
                 slideshow.handleKeyboard();
             }
         }

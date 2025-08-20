@@ -54,7 +54,9 @@ stop_code = "12345"
 # Fill this in if you want to be able to send photos to the slideshow program
 # using text messages. Requires a Twilio account and phone number.
 [twilio]
-twilio_sid = ""                 # E.g., "ECbf..."
-twilio_token = ""               # The secret token string.
-twilio_subdir = "twilio"        # Where to store images, relative to root_dir.
-twilio_message = "Text photos to 415-555-5555"
+sid = ""                 # E.g., "ECbf..."
+token = ""               # The secret token string.
+subdir = "twilio"        # Where to store images, relative to root_dir.
+message = "Text photos to 415-555-5555"
+qr_code = "sms:4155555555"
+

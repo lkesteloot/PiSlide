@@ -64,7 +64,7 @@ void Slideshow::move() {
     }
 }
 
-void Slideshow::draw(Texture const &starTexture) {
+void Slideshow::draw(Texture const &starTexture, qrcodegen::QrCode const &qrCode) {
     auto cs = getCurrentSlides();
 
     BeginDrawing();
@@ -108,6 +108,21 @@ void Slideshow::draw(Texture const &starTexture) {
         mTextWriter.write(mConfig.twilioMessage,
                 Vector2 { mScreenWidth/2.0f, mScreenHeight - DISPLAY_MARGIN },
                 48, fadeColor, TextWriter::Alignment::CENTER, TextWriter::Alignment::END);
+
+        // Draw QR code.
+        int border = 1;
+        int size = qrCode.getSize();
+        int moduleSize = 5;
+        for (int y = -border; y < size + border; y++) {
+            for (int x = -border; x < size + border; x++) {
+                bool dark = qrCode.getModule(x, y);
+                Color moduleColor = Fade(dark ? BLACK : DARKGRAY, fade);
+                DrawRectangle(
+                        mScreenWidth - DISPLAY_MARGIN + (x - size - border)*moduleSize,
+                        mScreenHeight - DISPLAY_MARGIN + (y - size - border)*moduleSize,
+                        moduleSize, moduleSize, moduleColor);
+            }
+        }
     }
 
     EndDrawing();
@@ -224,7 +239,8 @@ void Slideshow::handleKeyboard() {
             toggleBus();
         } else if (ch == 'T') {
             // slideshow.toggle_twilio()
-        } else if (ch >= '1' and ch <= '5') {
+        } else if (ch >= '1' and ch <= '5' and !mParty) {
+            // Don't allow rating during a party, the stars aren't visible for feedback.
             ratePhoto(ch - '1' + 1);
         } else {
             std::cout << "Got unknown char " << ch << '\n'; // TODO remove

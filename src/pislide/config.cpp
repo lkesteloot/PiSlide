@@ -117,6 +117,10 @@ bool Config::readConfigFile(std::filesystem::path const &pathname) {
         if (auto value = config.at_path("twilio.message").value<std::string>()) {
             this->twilioMessage = *value;
         }
+
+        if (auto value = config.at_path("twilio.qr_code").value<std::string>()) {
+            this->twilioQrCode = *value;
+        }
     } catch (toml::parse_error const &err) {
         std::cerr << "Problem with config file " << pathname << ":\n"
                 << "  " << err.description() << '\n'

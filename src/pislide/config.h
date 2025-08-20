@@ -119,6 +119,12 @@ struct Config final {
     std::string twilioMessage;
 
     /**
+     * URL to put in QR code when in party mode. Should be a full "sms:" URL
+     * for the phone number to SMS photos, such as "sms:7035551212".
+     */
+    std::string twilioQrCode;
+
+    /**
      * Set default values.
      */
     Config();

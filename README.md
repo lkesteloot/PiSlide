@@ -110,6 +110,8 @@ cmake --build build --target run --parallel
 
 `TinyEXIF.cpp` is from `https://github.com/cdcseacave/TinyEXIF`
 
+`QR-Code-generator` is from `https://github.com/nayuki/QR-Code-generator`
+
 # Contributing
 
 Conventions in the code:

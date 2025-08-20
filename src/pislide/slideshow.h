@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include "qrcodegen.hpp"
+
 #include "config.h"
 #include "database.h"
 #include "slide.h"
@@ -102,7 +104,7 @@ public:
     bool loopRunning() const;
     void prefetch();
     void move();
-    void draw(Texture const &starTexture);
+    void draw(Texture const &starTexture, qrcodegen::QrCode const &qrCode);
     void handleKeyboard();
 };
 

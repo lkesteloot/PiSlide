@@ -85,7 +85,7 @@ void Slide::move(Config const &config, bool paused, bool promptingEmail, double 
 }
 
 void Slide::draw(Config const &config, TextWriter &textWriter, Texture const &starTexture,
-        int screenWidth, int screenHeight, float opacity, bool drawText) {
+        int screenWidth, int screenHeight, float opacity, bool drawSlideInfo) {
 
     // Draw the photo.
     float scale = mActualZoom*mActualWidth/mTexture.width;
@@ -101,28 +101,28 @@ void Slide::draw(Config const &config, TextWriter &textWriter, Texture const &st
     float y = screenCenterY - (photoCenterX*s + photoCenterY*c);
     DrawTextureEx(mTexture, Vector2 { x, y }, angle, scale, Fade(WHITE, mActualAlpha*opacity));
 
-    // We're drawing bottom to top.
-    y = screenHeight - DISPLAY_MARGIN;
+    if (drawSlideInfo) {
+        // We're drawing bottom to top.
+        y = screenHeight - DISPLAY_MARGIN;
 
-    // Draw the rating stars.
-    y -= STAR_SIZE;
-    int rating = mPhoto.rating;
-    if (rating != 3) {
-        float starScale = STAR_SIZE / starTexture.width;
-        Color starColor = Fade(WHITE, 0.5*mActualAlpha*mActualAlpha*opacity);
+        // Draw the rating stars.
+        y -= STAR_SIZE;
+        int rating = mPhoto.rating;
+        if (rating != 3) {
+            float starScale = STAR_SIZE / starTexture.width;
+            Color starColor = Fade(WHITE, 0.5*mActualAlpha*mActualAlpha*opacity);
 
-        for (int i = 0; i < rating; i++) {
-            Vector2 position {
-                .x = screenWidth/2 + (-(rating - 1)/2.0f + i)*STAR_SIZE*1.2f - STAR_SIZE/2.0f,
-                .y = y,
-            };
-            DrawTextureEx(starTexture, position, 0, starScale, starColor);
+            for (int i = 0; i < rating; i++) {
+                Vector2 position {
+                    .x = screenWidth/2 + (-(rating - 1)/2.0f + i)*STAR_SIZE*1.2f - STAR_SIZE/2.0f,
+                    .y = y,
+                };
+                DrawTextureEx(starTexture, position, 0, starScale, starColor);
+            }
         }
-    }
-    y -= 20;
+        y -= 20;
 
-    // Draw the text.
-    if (drawText) {
+        // Draw the text.
         // Square the alpha to bias towards transparent, because overlapping text
         // looks bad and we want more transparency during the cross-fade.
         Color color = Fade(WHITE, mActualAlpha*mActualAlpha*opacity);

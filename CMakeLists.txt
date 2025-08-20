@@ -49,7 +49,8 @@ add_executable(pislide ${SOURCES})
 # Strict compile options.
 target_compile_options(pislide PRIVATE -Wall -Werror -g -DTINYEXIF_NO_XMP_SUPPORT
     -I${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/TinyEXIF
-    -I${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/TinySHA1)
+    -I${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/TinySHA1
+    -I${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/QR-Code-generator)
 
 # Libraries we need.
 target_link_libraries(pislide PRIVATE raylib sqlite3 cpr::cpr nlohmann_json::nlohmann_json raylib tomlplusplus::tomlplusplus)
