@@ -41,13 +41,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Find all source files.
-file(GLOB SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
 # Define our program.
 add_executable(pislide ${SOURCES})
 
 # Strict compile options.
-target_compile_options(pislide PRIVATE -Wall -Werror -g -DTINYEXIF_NO_XMP_SUPPORT)
+target_compile_options(pislide PRIVATE -Wall -Werror -g -DTINYEXIF_NO_XMP_SUPPORT
+    -I${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/TinyEXIF
+    -I${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/TinySHA1)
 
 # Libraries we need.
 target_link_libraries(pislide PRIVATE raylib sqlite3 cpr::cpr nlohmann_json::nlohmann_json raylib tomlplusplus::tomlplusplus)
@@ -82,8 +84,8 @@ endif()
 
 # Define our Twilio test program.
 add_executable(test-twilio
-    "${CMAKE_CURRENT_SOURCE_DIR}/twilio.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/config.cpp")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/pislide/twilio.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/pislide/config.cpp")
 
 # Strict compile options.
 target_compile_options(test-twilio PRIVATE -Wall -Werror -g)
