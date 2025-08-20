@@ -79,6 +79,14 @@ public:
     }
 
     /**
+     * Clear the request queue. Call this before ask() if you want at most
+     * one queued request at a time.
+     */
+    void clearRequestQueue() {
+        mRequestQueue.clear();
+    }
+
+    /**
      * Get a response, if any.
      */
     std::optional<RESPONSE> get() {

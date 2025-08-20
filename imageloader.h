@@ -15,7 +15,7 @@
 /**
  * Information about an image that was loaded.
  */
-struct LoadedImage {
+struct LoadedImage final {
     Photo photo;
     // If the pointer is null, the image failed to load.
     std::shared_ptr<Image> image;

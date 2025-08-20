@@ -9,6 +9,7 @@
 #include "slidecache.h"
 #include "textwriter.h"
 #include "businfo.h"
+#include "twiliofetcher.h"
 
 /**
  * Runs the whole slideshow (animates and draws slides, handles user input, ...).
@@ -22,6 +23,7 @@ class Slideshow final {
     TextWriter mTextWriter;
     SlideCache mSlideCache;
     BusInfo mBusInfo;
+    TwilioFetcher mTwilioFetcher;
     double mPreviousFrameTime = 0;
     double mTime = 0;
     bool mPaused = false;

@@ -101,7 +101,7 @@ namespace {
     }
 }
 
-std::vector<std::shared_ptr<TwilioImage>> downloadImages(
+std::vector<std::shared_ptr<TwilioImage>> downloadTwilioImages(
         std::filesystem::path const &imageDir,
         bool deleteMessages, bool deleteImages,
         Config const &config) {
@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
         // that window, we'll delete the message before we have a chance
         // to get the photo. So don't delete messages, just let them live
         // indefinitely.
-        auto images = downloadImages("/home/lk/twilio-images", true, true, config);
+        auto images = downloadTwilioImages("/home/lk/twilio-images", true, true, config);
         for (auto image : images) {
             std::cout << image->sourcePhoneNumber << " " << image->dateSent << " " << image->pathname << '\n';
         }

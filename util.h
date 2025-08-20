@@ -59,7 +59,6 @@ std::vector<std::string> split(std::string const &input, char delimiter);
  */
 std::string stripExtension(std::string const &pathname);
 
-
 /**
  * Read all the bytes of a file. Throws runtime_error() if it can't
  * open or read the file.

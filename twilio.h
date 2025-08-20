@@ -27,7 +27,7 @@ struct TwilioImage final {
  * Returns the list of downloaded images. If something goes wrong, returns
  * an empty vector.
  */
-std::vector<std::shared_ptr<TwilioImage>> downloadImages(
+std::vector<std::shared_ptr<TwilioImage>> downloadTwilioImages(
         std::filesystem::path const &imageDir,
         bool deleteMessages, bool deleteImages,
         Config const &config);
