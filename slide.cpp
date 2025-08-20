@@ -85,7 +85,7 @@ void Slide::move(Config const &config, bool paused, bool promptingEmail, double 
 }
 
 void Slide::draw(Config const &config, TextWriter &textWriter, Texture const &starTexture,
-        int screenWidth, int screenHeight, float opacity) {
+        int screenWidth, int screenHeight, float opacity, bool drawText) {
 
     // Draw the photo.
     float scale = mActualZoom*mActualWidth/mTexture.width;
@@ -121,14 +121,17 @@ void Slide::draw(Config const &config, TextWriter &textWriter, Texture const &st
     }
     y -= 20;
 
-    // Square the alpha to bias towards transparent, because overlapping text
-    // looks bad and we want more transparency during the cross-fade.
-    Color color = Fade(WHITE, mActualAlpha*mActualAlpha*opacity);
-    Rectangle pos = textWriter.write(mPhoto.displayDate, Vector2 { screenWidth/2.0f, y },
-            32, color, TextWriter::Alignment::CENTER, TextWriter::Alignment::END);
-    y -= 4 + pos.height;
-    textWriter.write(mPhoto.label, Vector2 { screenWidth/2.0f, y },
-            48, color, TextWriter::Alignment::CENTER, TextWriter::Alignment::END);
+    // Draw the text.
+    if (drawText) {
+        // Square the alpha to bias towards transparent, because overlapping text
+        // looks bad and we want more transparency during the cross-fade.
+        Color color = Fade(WHITE, mActualAlpha*mActualAlpha*opacity);
+        Rectangle pos = textWriter.write(mPhoto.displayDate, Vector2 { screenWidth/2.0f, y },
+                32, color, TextWriter::Alignment::CENTER, TextWriter::Alignment::END);
+        y -= 4 + pos.height;
+        textWriter.write(mPhoto.label, Vector2 { screenWidth/2.0f, y },
+                48, color, TextWriter::Alignment::CENTER, TextWriter::Alignment::END);
+    }
 
     touch();
 }

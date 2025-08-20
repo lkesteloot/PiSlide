@@ -7,19 +7,14 @@
 #include "twilio.h"
 
 namespace {
-/*
-    // How often, in seconds, to fetch messages.
-    if config.PARTY_MODE:
-        FETCH_PERIOD_S = 1
-    else:
-        FETCH_PERIOD_S = 60
-*/
-
     static std::string URL_BASE = "https://api.twilio.com";
 
     // We get a 403 fetching images without this:
     static std::string USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36";
 
+    /**
+     * The info we need out of each Twilio message.
+     */
     struct TwilioMessage final {
         std::string uri;
         std::string sourcePhoneNumber;
@@ -27,7 +22,7 @@ namespace {
         std::string mediaListUrl;
     };
 
-    // Returns the JSON content of the specified Twilio-relative URL (after the
+    // Returns the JSON content of the specified Twilio-relative path (after the
     // domain name), or a null JSON object if an error occurred.
     nlohmann::json fetchJson(std::string const &path, Config const &config) {
         cpr::Response r = cpr::Get(

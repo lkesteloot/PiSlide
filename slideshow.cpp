@@ -79,10 +79,12 @@ void Slideshow::draw(Texture const &starTexture) {
     // been positioned. Skip drawing in case the bad positioning
     // causes problems (despite zero alpha).
     if (cs.currentSlide && cs.currentSlide->configured()) {
-        cs.currentSlide->draw(mConfig, mTextWriter, starTexture, mScreenWidth, mScreenHeight, fade);
+        cs.currentSlide->draw(mConfig, mTextWriter, starTexture,
+                mScreenWidth, mScreenHeight, fade, !mParty);
     }
     if (cs.nextSlide && cs.nextSlide->configured()) {
-        cs.nextSlide->draw(mConfig, mTextWriter, starTexture, mScreenWidth, mScreenHeight, fade);
+        cs.nextSlide->draw(mConfig, mTextWriter, starTexture,
+                mScreenWidth, mScreenHeight, fade, !mParty);
     }
 
     // Reset any slide we didn't draw so that next time it's drawn it can jump
@@ -98,6 +100,14 @@ void Slideshow::draw(Texture const &starTexture) {
     drawTime(fadeColor);
     if (mShowingBus) {
         drawBus(fadeColor);
+    }
+
+    // Party mode:
+    if (mParty) {
+        // Draw Twilio instructions.
+        mTextWriter.write(mConfig.twilioMessage,
+                Vector2 { mScreenWidth/2.0f, mScreenHeight - DISPLAY_MARGIN },
+                48, fadeColor, TextWriter::Alignment::CENTER, TextWriter::Alignment::END);
     }
 
     EndDrawing();
@@ -202,6 +212,8 @@ void Slideshow::handleKeyboard() {
             togglePause();
         } else if (ch == 'D') {
             toggleDebug();
+        } else if (ch == 'P') {
+            toggleParty();
         } else if (ch == 'm') {
             // slideshow.mute()
         } else if (ch == 's') {
@@ -247,6 +259,10 @@ void Slideshow::togglePause() {
 
 void Slideshow::toggleDebug() {
     mDebug = !mDebug;
+}
+
+void Slideshow::toggleParty() {
+    mParty = !mParty;
 }
 
 void Slideshow::toggleBus() {

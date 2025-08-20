@@ -31,6 +31,7 @@ class Slideshow final {
     bool mShowingBus = false;
     double mBusStartTime = 0;
     bool mDebug = false;
+    bool mParty = false;
     bool mQuit = false;
 
     /**
@@ -68,6 +69,7 @@ class Slideshow final {
     void togglePause();
     void toggleBus();
     void toggleDebug();
+    void toggleParty();
 
     // Modify the slide.
     void rotatePhoto(int degrees);
