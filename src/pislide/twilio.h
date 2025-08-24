@@ -22,13 +22,10 @@ struct TwilioImage final {
  * Connects to Twilio, downloads available messages, downloads their
  * images to files on disk, and optionally deletes the images and/or messages.
  *
- * imageDir: directory where to save the image
- *
  * Returns the list of downloaded images. If something goes wrong, returns
  * an empty vector.
  */
 std::vector<std::shared_ptr<TwilioImage>> downloadTwilioImages(
-        std::filesystem::path const &imageDir,
         bool deleteMessages, bool deleteImages,
         Config const &config);
 

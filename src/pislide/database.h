@@ -102,6 +102,7 @@ public:
     void printPersons() const;
     std::vector<Photo> getAllPhotos() const;
     std::optional<Photo> getPhotoByHashBack(std::string const &hashBack) const;
+    std::optional<Photo> getPhotoById(int32_t id) const;
     std::vector<PhotoFile> getAllPhotoFiles() const;
 
     // Updates.

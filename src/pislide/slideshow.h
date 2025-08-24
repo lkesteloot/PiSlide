@@ -11,13 +11,12 @@
 #include "slidecache.h"
 #include "textwriter.h"
 #include "businfo.h"
-#include "twiliofetcher.h"
 
 /**
  * Runs the whole slideshow (animates and draws slides, handles user input, ...).
  */
 class Slideshow final {
-    std::vector<Photo> const &mDbPhotos;
+    std::vector<Photo> &mDbPhotos;
     int mScreenWidth;
     int mScreenHeight;
     Config const &mConfig;
@@ -25,7 +24,6 @@ class Slideshow final {
     TextWriter mTextWriter;
     SlideCache mSlideCache;
     BusInfo mBusInfo;
-    TwilioFetcher mTwilioFetcher;
     double mPreviousFrameTime = 0;
     double mTime = 0;
     bool mPaused = false;
@@ -81,7 +79,7 @@ class Slideshow final {
     static std::shared_ptr<Image> makeBrokenImage(TextWriter &textWriter);
 
 public:
-    Slideshow(std::vector<Photo> const &dbPhotos,
+    Slideshow(std::vector<Photo> &dbPhotos,
             int screenWidth,
             int screenHeight,
             Config const &config,
@@ -106,5 +104,7 @@ public:
     void move();
     void draw(Texture const &starTexture, qrcodegen::QrCode const &qrCode);
     void handleKeyboard();
+    void insertPhoto(Photo const &photo);
+    bool isParty() const { return mParty; }
 };
 

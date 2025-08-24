@@ -53,10 +53,19 @@ namespace {
         return true;
     }
 
-    // Save the image at the specified Twilio-relative URL (after the
-    // domain name). Returns whether successful.
-    bool saveImage(std::string const &path, std::filesystem::path const &pathname) {
+    // Download and save the image at the specified Twilio-relative path (after
+    // the domain name). Returns whether successful.
+    bool downloadImage(std::string const &path, std::filesystem::path const &pathname) {
         std::cout << "Fetching Twilio photo to " << pathname << '\n';
+
+        // Make sure the directory exists.
+        std::filesystem::path dir = pathname.parent_path();
+        bool createdDir = std::filesystem::create_directories(dir);
+        if (createdDir) {
+            std::cout << "Created Twilio download directory " << dir << '\n';
+        }
+
+        // Stream the file.
         std::ofstream f(pathname, std::ios::binary);
         cpr::Response r = cpr::Download(f,
                 cpr::Url{URL_BASE + path},
@@ -97,15 +106,15 @@ namespace {
 }
 
 std::vector<std::shared_ptr<TwilioImage>> downloadTwilioImages(
-        std::filesystem::path const &imageDir,
         bool deleteMessages, bool deleteImages,
         Config const &config) {
 
     std::vector<std::shared_ptr<TwilioImage>> images;
 
+    std::cout << "Twilio: Fetching messages\n";
     auto messages = fetchMessages(config);
     for (auto message : messages) {
-        std::cout << "Processing message " << message->uri << '\n';
+        std::cout << "Twilio: Processing message " << message->uri << '\n';
         bool allSuccess = true;
         if (!message->mediaListUrl.empty()) {
             auto medias = fetchJson(message->mediaListUrl, config);
@@ -115,8 +124,8 @@ std::vector<std::shared_ptr<TwilioImage>> downloadTwilioImages(
                 std::string mediaUri = media["uri"];
                 if (contentType == "image/jpeg" && mediaUri.ends_with(".json")) {
                     std::string imageUri = mediaUri.substr(0, mediaUri.length() - 5);
-                    std::filesystem::path imagePathname = imageDir / (photoSid + ".jpg");
-                    bool success = saveImage(imageUri, imagePathname);
+                    std::filesystem::path imagePathname = config.twilioSubdir / (photoSid + ".jpg");
+                    bool success = downloadImage(imageUri, config.rootDir / imagePathname);
                     if (success) {
                         images.emplace_back(std::make_shared<TwilioImage>(
                                     TwilioImage{
@@ -165,12 +174,7 @@ int main(int argc, char *argv[]) {
         }
     }
     if (true) {
-        // We've seen cases where messages appeared in this list a few
-        // seconds before their photos were available. If we catch it in
-        // that window, we'll delete the message before we have a chance
-        // to get the photo. So don't delete messages, just let them live
-        // indefinitely.
-        auto images = downloadTwilioImages("/home/lk/twilio-images", true, true, config);
+        auto images = downloadTwilioImages(false, true, config);
         for (auto image : images) {
             std::cout << image->sourcePhoneNumber << " " << image->dateSent << " " << image->pathname << '\n';
         }

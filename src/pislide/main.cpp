@@ -23,6 +23,8 @@
 #include "config.h"
 #include "util.h"
 #include "label.h"
+#include "twiliofetcher.h"
+#include "constants.h"
 
 namespace {
     constexpr int MAX_FILE_WARNING_COUNT = 10;
@@ -323,6 +325,39 @@ namespace {
         return goodPhotos;
     }
 
+    void fetchTwilioImages(TwilioFetcher &twilioFetcher,
+            Database const &database,
+            Config const &config,
+            Slideshow &slideshow) {
+
+        // Initiate a Twilio fetch if we're in party mode.
+        if (slideshow.isParty()) {
+            twilioFetcher.initiateFetch(MIN_TWILIO_FETCH_INTERVAL_S);
+        }
+
+        // See if any images came in from the Twilio thread. If so, process them
+        // and show them next. Do this regardless of party mode in order to catch
+        // images that were fetched but not yet retrieved when party mode was
+        // turned off.
+        std::vector<std::shared_ptr<TwilioImage>> images = twilioFetcher.get();
+        for (auto image : images) {
+            // Compute hash, add to database. This takes a bit of time and
+            // causes a hiccup in the animation. We'd have to split the hash
+            // and the database work to avoid that.
+            int32_t photoId = handleNewAndRenamedFile(database, config, image->pathname);
+
+            // Fetch back from database and fix up pathname.
+            std::optional<Photo> photo = database.getPhotoById(photoId);
+            if (photo) {
+                photo->pathname = image->pathname;
+                photo->absolutePathname = config.rootDir / photo->pathname;
+                slideshow.insertPhoto(*photo);
+            } else {
+                std::cout << "Error: Didn't find expected photo " << photoId << '\n';
+            }
+        }
+    }
+
     /**
      * Like main(), but is allowed to throw, and the exception will be displayed
      * nicely to the user.
@@ -410,14 +445,25 @@ namespace {
         // Match Python version FPS.
         SetTargetFPS(40);
 
+        // Fetch Twilio images in another thread.
+        TwilioFetcher twilioFetcher(config);
+        // We've seen cases where messages appeared in the list a few
+        // seconds before their photos were available. If we catch it in
+        // that window, we'll delete the message before we have a chance
+        // to get the photo. So delete messages, just let them live
+        // indefinitely. If that becomes a problem, we can delete messages
+        // older than a certain age.
+        twilioFetcher.setDeleteMessages(false);
+        twilioFetcher.setDeleteImages(true);
+
         {
             // Nested scope to delete slideshow before we close the window.
             Slideshow slideshow(dbPhotos, screenWidth, screenHeight, config, database);
 
             while (slideshow.loopRunning()) {
+                fetchTwilioImages(twilioFetcher, database, config, slideshow);
                 slideshow.prefetch();
                 slideshow.move();
-                // slideshow.fetch_twilio_photos();
                 slideshow.draw(starTexture, qrCode);
                 slideshow.handleKeyboard();
             }

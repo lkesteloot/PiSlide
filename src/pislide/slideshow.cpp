@@ -405,6 +405,38 @@ void Slideshow::ratePhoto(int rating) {
     }
 }
 
+void Slideshow::insertPhoto(Photo const &photo) {
+    if (mDbPhotos.empty()) {
+        // First photo, just add it.
+        mDbPhotos.push_back(photo);
+        mTime = 0;
+    } else {
+        std::cout << "Slideshow::insertPhoto(" << photo.id << ")\n";
+
+        // Get global photo index. This number goes on forever, not wrapping.
+        int photoIndex = getCurrentPhotoIndex();
+
+        // We want that "photoIndex + 1" have this new photo. Since we
+        // wrap all index numbers by the photo count and the photo count
+        // is about to go up by one, we must adjust our concept of time
+        // to pretend there's been this many photos all along.
+        int wrappedPhotoIndex = photoIndex % mDbPhotos.size();
+
+        // The number of times this virtual photo has been "inserted"
+        // in the past.
+        int insertCount = photoIndex / mDbPhotos.size();
+
+        // Adjust the time by this number of virtual photos.
+        mTime += insertCount*mConfig.slideTotalTime();
+
+        // Insert into our array.
+        mDbPhotos.insert(mDbPhotos.begin() + wrappedPhotoIndex + 1, photo);
+
+        // Prefetch it.
+        prefetch();
+    }
+}
+
 std::shared_ptr<Image> Slideshow::makeBrokenImage(TextWriter &textWriter) {
     Image image = GenImageGradientRadial(1024, 1024, 0.0f,
             ColorFromHSV(20.0f, 0.2f, 0.2f),

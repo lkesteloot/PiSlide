@@ -21,3 +21,7 @@ constexpr int BUS_INFO_FETCH_S = 60;
 // need anything bigger than 2048 for our displays. It might be nice eventually
 // to auto-detect the GL max size, but raylib doesn't provide that.
 constexpr int MAX_TEXTURE_SIZE = 2048;
+
+// Minimum number of seconds between Twilio fetches during party mode.
+constexpr double MIN_TWILIO_FETCH_INTERVAL_S = 1;
+

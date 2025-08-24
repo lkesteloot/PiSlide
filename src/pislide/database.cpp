@@ -106,6 +106,24 @@ std::optional<Photo> Database::getPhotoByHashBack(std::string const &hashBack) c
     }
 }
 
+std::optional<Photo> Database::getPhotoById(int32_t id) const {
+    auto stmt = prepare("SELECT "s + PHOTO_FIELDS + " FROM photo WHERE id = ?");
+    stmt->bindInt(1, id);
+
+    if (stmt->step()) {
+        return std::make_optional<Photo>(
+                stmt->getInt(0),
+                stmt->getString(1),
+                stmt->getInt(2),
+                stmt->getInt(3),
+                stmt->getLong(4),
+                stmt->getString(5),
+                stmt->getString(6));
+    } else {
+        return std::optional<Photo>();
+    }
+}
+
 std::vector<PhotoFile> Database::getAllPhotoFiles() const {
     auto stmt = prepare("SELECT "s + PHOTO_FILE_FIELDS + " FROM photo_file");
     std::vector<PhotoFile> photoFiles;

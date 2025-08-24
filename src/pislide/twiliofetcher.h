@@ -15,7 +15,6 @@
 class TwilioFetcher final {
     // Request sent to the executor's thread.
     struct Request {
-        std::filesystem::path imageDir;
         bool deleteMessages;
         bool deleteImages;
         Config const &config;
@@ -29,19 +28,44 @@ class TwilioFetcher final {
     // Executor to fetch images in another thread.
     Executor<Request,Response> mExecutor;
 
+    Config const &mConfig;
+    bool mDeleteMessages = false;
+    bool mDeleteImages = false;
+    double mPreviousFetch = 0;
+
     // Fetch the images. Runs in a different thread.
     static Response fetchImagesInThread(Request const &request);
 
 public:
-    TwilioFetcher();
+    TwilioFetcher(Config const &config);
+
+    /**
+     * Whether to delete Twilio messages after having fetched them.
+     * Defaults to false.
+     */
+    void setDeleteMessages(bool deleteMessages) {
+        mDeleteMessages = deleteMessages;
+    }
+
+    /**
+     * Whether to delete Twilio images after having fetched them.
+     * Defaults to false.
+     */
+    void setDeleteImages(bool deleteImages) {
+        mDeleteImages = deleteImages;
+    }
 
     /**
      * Request an asynchronous fetch of Twilio images. It's safe to call this
      * multiple times even if an ongoing fetch is happening.
      */
-    void fetch(std::filesystem::path const &imageDir,
-            bool deleteMessages, bool deleteImages,
-            Config const &config);
+    void initiateFetch();
+
+    /**
+     * Same as initiateFetch(), but throttled to be no more frequent than
+     * every "throttleSeconds".
+     */
+    void initiateFetch(double throttleSeconds);
 
     /**
      * Return the images that have been fetched, if any.
