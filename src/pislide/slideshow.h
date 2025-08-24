@@ -11,6 +11,9 @@
 #include "slidecache.h"
 #include "textwriter.h"
 #include "businfo.h"
+#include "constants.h"
+
+#include <spdlog/sinks/ringbuffer_sink.h>
 
 /**
  * Runs the whole slideshow (animates and draws slides, handles user input, ...).
@@ -23,6 +26,7 @@ class Slideshow final {
     Database const &mDatabase;
     TextWriter mTextWriter;
     SlideCache mSlideCache;
+    std::shared_ptr<spdlog::sinks::ringbuffer_sink_mt> mLogRingBufferSink;
     BusInfo mBusInfo;
     double mPreviousFrameTime = 0;
     double mTime = 0;
@@ -89,10 +93,15 @@ public:
         mScreenHeight(screenHeight),
         mConfig(config),
         mDatabase(database),
-        mSlideCache(screenWidth, screenHeight, makeBrokenImage(mTextWriter)) {
+        mSlideCache(screenWidth, screenHeight, makeBrokenImage(mTextWriter)),
+        mLogRingBufferSink(std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(DEBUG_LOG_COUNT)) {
 
         // We'll handle this.
         SetExitKey(0);
+
+        // Add our own log sink. This call is not thread-safe, but currently nothing
+        // else modifies this vector.
+        spdlog::default_logger()->sinks().push_back(mLogRingBufferSink);
     }
 
     // Can't copy.

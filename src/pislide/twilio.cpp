@@ -116,7 +116,7 @@ std::vector<std::shared_ptr<TwilioImage>> downloadTwilioImages(
     spdlog::info("Twilio: Fetching messages");
     auto messages = fetchMessages(config);
     for (auto message : messages) {
-        spdlog::info("Twilio: Processing message {}", message->uri);
+        spdlog::debug("Twilio: Processing message {}", message->uri);
         bool allSuccess = true;
         if (!message->mediaListUrl.empty()) {
             auto medias = fetchJson(message->mediaListUrl, config);

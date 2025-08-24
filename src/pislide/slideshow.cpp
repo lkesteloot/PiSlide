@@ -174,7 +174,7 @@ void Slideshow::handleKeyboard() {
     // Unicode code point.
     int ch = GetCharPressed();
     if (ch != KEY_NULL) {
-        spdlog::debug("Got char {}", ch);
+        spdlog::trace("Got char {}", ch);
         /*
         if self.prompting_email:
             if ch == 27: # ESC
@@ -244,7 +244,7 @@ void Slideshow::handleKeyboard() {
             // Don't allow rating during a party, the stars aren't visible for feedback.
             ratePhoto(ch - '1' + 1);
         } else {
-            spdlog::debug("Got unknown char {}", ch);
+            spdlog::trace("Got unknown char {}", ch);
         }
     }
 
@@ -259,7 +259,7 @@ void Slideshow::handleKeyboard() {
         } else if (key >= KEY_F1 and key <= KEY_F12) {
             // slideshow.play_radio_station(key - KEY_F1);
         } else {
-            spdlog::debug("Got unknown key {}", key);
+            spdlog::trace("Got unknown key {}", key);
         }
     }
 }
@@ -311,6 +311,7 @@ void Slideshow::drawDebug() {
             TextWriter::Alignment::START, TextWriter::Alignment::START);
     pos.y += FONT_SIZE;
 
+    // Basic stats.
     std::stringstream ss;
     ss.imbue(std::locale(""));
     ss << "Number of photos: " << mDbPhotos.size();
@@ -341,6 +342,25 @@ void Slideshow::drawDebug() {
             color = YELLOW;
         }
         mTextWriter.write(ss.str(), pos, FONT_SIZE, color, TextWriter::Alignment::START, TextWriter::Alignment::START);
+        pos.y += FONT_SIZE;
+    }
+
+    pos.y += FONT_SIZE;
+
+    // Write logs.
+    // last_raw() is also available if we want to highlight warn/error logs, dim debug, etc.
+    std::vector<std::string> logMessages = mLogRingBufferSink->last_formatted();
+    for (auto const &logMessage : logMessages) {
+        Color color = WHITE;
+        if (logMessage.contains("[debug]")) {
+            color = GRAY;
+        } else if (logMessage.contains("[warn]")) {
+            color = YELLOW;
+        } else if (logMessage.contains("[error]")) {
+            color = RED;
+        }
+        mTextWriter.write(logMessage, pos, FONT_SIZE, color,
+                TextWriter::Alignment::START, TextWriter::Alignment::START);
         pos.y += FONT_SIZE;
     }
 }

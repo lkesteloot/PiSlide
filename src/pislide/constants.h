@@ -25,3 +25,5 @@ constexpr int MAX_TEXTURE_SIZE = 2048;
 // Minimum number of seconds between Twilio fetches during party mode.
 constexpr double MIN_TWILIO_FETCH_INTERVAL_S = 1;
 
+// Number of displayed log entries in debug mode.
+constexpr int DEBUG_LOG_COUNT = 12;

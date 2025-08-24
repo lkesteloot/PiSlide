@@ -379,6 +379,7 @@ namespace {
         auto logger = std::make_shared<spdlog::logger>(
                 "logger", spdlog::sinks_init_list({consoleSink, fileSink}));
         logger->flush_on(spdlog::level::trace);
+        logger->set_level(spdlog::level::debug);
         spdlog::set_default_logger(logger);
 
         spdlog::info("--- PiSlide ---");
