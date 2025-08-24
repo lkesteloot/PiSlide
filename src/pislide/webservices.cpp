@@ -4,6 +4,7 @@
 
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
+#include <spdlog/spdlog.h>
 
 #include "webservices.h"
 
@@ -14,7 +15,7 @@ std::vector<long> nextBuses(Config const &config) {
 
     // See if we're configured at all.
     if (config.bus511orgToken.empty() || config.bus511orgAgency.empty() || config.bus511orgStopCode.empty()) {
-        std::cerr << "511.org is not configured\n";
+        spdlog::error("511.org is not configured");
         return times;
     }
 
@@ -27,7 +28,7 @@ std::vector<long> nextBuses(Config const &config) {
 
     cpr::Response r = cpr::Get(cpr::Url{url});
     if (r.status_code != 200) {
-        std::cerr << "Got status code " << r.status_code << " fetching 511.org information.\n";
+        spdlog::warn("Got status code {} fetching 511.org information", r.status_code);
         return times;
     }
 
@@ -40,7 +41,7 @@ std::vector<long> nextBuses(Config const &config) {
             struct std::tm tm = {};
             char *p = strptime(timestamp.c_str(), "%Y-%m-%dT%H:%M:%SZ", &tm);
             if (p == nullptr || *p != '\0') {
-                std::cerr << "Unable to parse 511.org timestamp " << timestamp << '\n';
+                spdlog::warn("Unable to parse 511.org timestamp {}", timestamp);
             } else {
                 times.emplace_back(timegm(&tm));
             }

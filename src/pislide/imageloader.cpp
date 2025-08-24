@@ -1,6 +1,9 @@
 
 #include <functional>
 
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/std.h>
+
 #include "imageloader.h"
 #include "constants.h"
 
@@ -109,7 +112,7 @@ ImageLoader::Response ImageLoader::loadPhotoInThread(Request const &request) {
         imagePtr = makeImageSharedPtr(image);
     } else {
         // Image failed to load.
-        std::cerr << "Failed to load " << request.photo.absolutePathname << '\n';
+        spdlog::error("Failed to load {}", request.photo.absolutePathname);
     }
 
     return Response {

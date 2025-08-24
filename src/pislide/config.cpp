@@ -2,7 +2,9 @@
 #include <iostream>
 #include <deque>
 
-#include "toml++/toml.hpp"
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/std.h>
+#include <toml++/toml.hpp>
 
 #include "config.h"
 
@@ -122,9 +124,8 @@ bool Config::readConfigFile(std::filesystem::path const &pathname) {
             this->twilioQrCode = *value;
         }
     } catch (toml::parse_error const &err) {
-        std::cerr << "Problem with config file " << pathname << ":\n"
-                << "  " << err.description() << '\n'
-                << "  at " << err.source().begin << '\n';
+        spdlog::error("Problem with config file {}: {} at line {}",
+                pathname, err.description(), err.source().begin.line);
         return false;
     }
 
@@ -147,12 +148,12 @@ bool Config::parseCommandLine(int argc, char *argv[]) {
 
         if (arg == "--root-dir") {
             if (args.empty()) {
-                std::cerr << "Must specify directory for --root-dir" << '\n';
+                spdlog::error("Must specify directory for --root-dir");
                 return false;
             }
             rootDir = stripTrailingSlash(nextArg());
         } else {
-            std::cerr << "Unknown flag: " << arg << '\n';
+            spdlog::error("Unknown flag: {}", arg);
             return false;
         }
     }
@@ -162,7 +163,7 @@ bool Config::parseCommandLine(int argc, char *argv[]) {
 
 bool Config::isValid() const {
     if (rootDir.empty()) {
-        std::cerr << "Must specify a rootDir" << '\n';
+        spdlog::error("Must specify a rootDir");
         return false;
     }
 

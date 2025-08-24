@@ -1,5 +1,4 @@
 
-#include <iostream>
 #include <stdexcept>
 #include <algorithm>
 #include <random>
@@ -13,8 +12,12 @@
 #include <sstream>
 #include <chrono>
 
-#include "raylib.h"
-#include "TinyEXIF.h"
+#include <raylib.h>
+#include <TinyEXIF.h>
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/std.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/rotating_file_sink.h>
 
 #include "database.h"
 #include "slideshow.h"
@@ -88,13 +91,13 @@ namespace {
                         itr.disable_recursion_pending();
                     }
                 } else {
-                    std::cerr << "Unknown directory entry type: " << path << '\n';
+                    spdlog::error("Unknown directory entry type: {}", path);
                     pathnames.clear();
                     return pathnames;
                 }
             }
         } catch (std::filesystem::filesystem_error const &e) {
-            std::cerr << "Filesystem error: " << e.what() << '\n';
+            spdlog::error("Filesystem error: {}", e.what());
         }
 
         return pathnames;
@@ -165,7 +168,7 @@ namespace {
             Config const &config,
             std::filesystem::path const &pathname) {
 
-        std::cout << "    Computing hash for " << pathname << '\n';
+        spdlog::info("    Computing hash for {}", pathname);
         std::string label = pathnameToLabel(config, pathname);
 
         // We want the hashes of the original files, not the processed ones.
@@ -186,18 +189,18 @@ namespace {
         int32_t photoId;
         if (photo) {
             // Renamed or moved photo.
-            std::cout << "        Renamed or moved photo.\n";
+            spdlog::info("        Renamed or moved photo");
             // Leave the timestamp the same, but update the label.
             photo->label = label;
             database.savePhoto(*photo);
             photoId = photo->id;
         } else {
             // New photo.
-            std::cout << "        New photo.\n";
+            spdlog::info("        New photo");
             int rotation = getFileRotation(absolutePathname);
             std::pair<std::string,int64_t> fileDate = getFileDate(absolutePathname);
-            std::cout << "            Rotation " << rotation << '\n';
-            std::cout << "            Date " << fileDate.first << '\n';
+            spdlog::info("            Rotation {}", rotation);
+            spdlog::info("            Date {}", fileDate.first);
             Photo newPhoto {
                 .hashBack = hashBack,
                 .rotation = rotation,
@@ -209,7 +212,7 @@ namespace {
 
             photoId = database.insertPhoto(newPhoto);
         }
-        std::cout << "            ID = " << photoId << "\n";
+        spdlog::info("            ID = {}", photoId);
 
         return photoId;
     }
@@ -229,7 +232,7 @@ namespace {
             pathnamesToDo.erase(photoFile.pathname);
         }
 
-        std::cout << "Analyzing " << pathnamesToDo.size() << " new or renamed photos...\n";
+        spdlog::info("Analyzing {} new or renamed photos...", pathnamesToDo.size());
         for (std::filesystem::path const &pathname : pathnamesToDo) {
             handleNewAndRenamedFile(database, config, pathname);
         }
@@ -301,13 +304,13 @@ namespace {
                 // Can't find any file on disk for this photo.
                 warningCount += 1;
                 if (warningCount <= MAX_FILE_WARNING_COUNT) {
-                    std::cout << "No file on disk for " << photo.hashBack << " (" << photo.label << ")" << '\n';
+                    spdlog::info("No file on disk for {} ({})", photo.hashBack, photo.label);
                 }
             }
         }
 
         if (warningCount != 0) {
-            std::cout << "Files missing on disk: " << warningCount << '\n';
+            spdlog::info("Files missing on disk: {}", warningCount);
         }
 
         return goodPhotos;
@@ -353,7 +356,7 @@ namespace {
                 photo->absolutePathname = config.rootDir / photo->pathname;
                 slideshow.insertPhoto(*photo);
             } else {
-                std::cout << "Error: Didn't find expected photo " << photoId << '\n';
+                spdlog::error("Didn't find expected photo {}", photoId);
             }
         }
     }
@@ -369,8 +372,16 @@ namespace {
         SetTraceLogLevel(LOG_WARNING);
         // TODO use SetTraceLogCallback() to redirect raylib logs to a log file.
 
-        // Write integers for humans (commas, etc.).
-        std::cout.imbue(std::locale(""));
+        // Configure logging.
+        auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+        auto fileSink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+                "logs/pislide", 1024*1024*10, 10);
+        auto logger = std::make_shared<spdlog::logger>(
+                "logger", spdlog::sinks_init_list({consoleSink, fileSink}));
+        logger->flush_on(spdlog::level::trace);
+        spdlog::set_default_logger(logger);
+
+        spdlog::info("--- PiSlide ---");
 
         // Get our configuration.
         Config config;
@@ -387,24 +398,24 @@ namespace {
 
         // Recursively read the photo tree from the disk.
         std::set<std::filesystem::path> diskPathnames = traverseDirectoryTree(config);
-        std::cout << "Photos on disk: " << diskPathnames.size() << '\n';
+        spdlog::info("Photos on disk: {:L}", diskPathnames.size());
 
         // TODO optionally resize images.
 
         // Get all photo files from the database.
         std::vector<PhotoFile> dbPhotoFiles = database.getAllPhotoFiles();
-        std::cout << "Photo files in database: " << dbPhotoFiles.size() << '\n';
+        spdlog::info("Photo files in database: {}", dbPhotoFiles.size());
 
         // Compute missing hashes of photos, add them to database.
         handleNewAndRenamedFiles(database, config, diskPathnames, dbPhotoFiles);
 
         // Keep only photos of the right rating and date range.
         std::vector<Photo> dbPhotos = database.getAllPhotos();
-        std::cout << "Photos in database: " << dbPhotos.size() << '\n';
+        spdlog::info("Photos in database: {}", dbPhotos.size());
         filterPhotosByRating(dbPhotos, config);
-        std::cout << "Photos after rating filter: " << dbPhotos.size() << '\n';
+        spdlog::info("Photos after rating filter: {}", dbPhotos.size());
         filterPhotosByDate(dbPhotos, config);
-        std::cout << "Photos after date filter: " << dbPhotos.size() << '\n';
+        spdlog::info("Photos after date filter: {}", dbPhotos.size());
 
         // Find a pathname for each photo.
         dbPhotos = assignPhotoPathnames(database, config, dbPhotos, diskPathnames);
@@ -413,10 +424,10 @@ namespace {
         dbPhotos = filterPhotosByPathnameSubstring(dbPhotos);
         // print("Photos after dir filter: %d" % (len(dbPhotos),))
 
-        std::cout << "Final photos to be shown: " << dbPhotos.size() << '\n';
+        spdlog::info("Final photos to be shown: {}", dbPhotos.size());
 
         if (dbPhotos.empty()) {
-            std::cerr << "Error: No photos found." << '\n';
+            spdlog::error("Error: No photos found");
             return -1;
         }
 
@@ -431,7 +442,7 @@ namespace {
         // This is really the window size:
         int screenWidth = GetScreenWidth();
         int screenHeight = GetScreenHeight();
-        std::cout << "Window size: " << screenWidth << "x" << screenHeight << '\n';
+        spdlog::info("Window size: {}x{}", screenWidth, screenHeight);
 
         // Load the star icon.
         Texture starTexture = LoadTexture("outline-star-256.png");
@@ -479,7 +490,7 @@ int main(int argc, char *argv[]) {
     try {
         return mainCanThrow(argc, argv);
     } catch (const std::exception &e) {
-        std::cerr << "Caught exception (" << e.what() << ")" << '\n';
+        spdlog::error("Caught exception ({})", e.what());
     }
     return -1;
 }

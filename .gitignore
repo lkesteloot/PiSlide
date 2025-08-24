@@ -10,3 +10,4 @@ resources
 .idea
 config.toml
 build
+/logs

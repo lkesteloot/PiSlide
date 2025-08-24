@@ -10,27 +10,37 @@ cmake_minimum_required(VERSION 3.16)
 
 # Fetch and build cpr (HTTP library).
 include(FetchContent)
-FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/libcpr/cpr.git
-                         GIT_TAG 1.11.2) # https://github.com/libcpr/cpr/releases
+FetchContent_Declare(cpr
+    GIT_REPOSITORY https://github.com/libcpr/cpr.git
+    GIT_TAG 1.11.2) # https://github.com/libcpr/cpr/releases
 FetchContent_MakeAvailable(cpr)
 
 # Fetch and build nlohmann JSON.
 # https://github.com/nlohmann/json/releases
-FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
+FetchContent_Declare(json
+    URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
 FetchContent_MakeAvailable(json)
 
 # Fetch and build raylib.
-FetchContent_Declare(raylib GIT_REPOSITORY https://github.com/raysan5/raylib.git
-                            GIT_TAG 5.5) # https://github.com/raysan5/raylib/releases
+FetchContent_Declare(raylib
+    GIT_REPOSITORY https://github.com/raysan5/raylib.git
+    GIT_TAG 5.5) # https://github.com/raysan5/raylib/releases
 set(BUILD_EXAMPLES OFF)
 set(PLATFORM Desktop)
 set(OPENGL_VERSION 2.1)
 FetchContent_MakeAvailable(raylib)
 
 # Fetch and build toml++.
-FetchContent_Declare(tomlplusplus GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
-                                  GIT_TAG v3.4.0) # https://github.com/marzer/tomlplusplus/releases
+FetchContent_Declare(tomlplusplus
+    GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
+    GIT_TAG v3.4.0) # https://github.com/marzer/tomlplusplus/releases
 FetchContent_MakeAvailable(tomlplusplus)
+
+# Fetch and build spdlog.
+FetchContent_Declare(spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog.git
+    GIT_TAG v1.15.3) # https://github.com/gabime/spdlog/releases
+FetchContent_MakeAvailable(spdlog)
 
 # Name of the project, using C++.
 project(PiSlide LANGUAGES CXX)
@@ -53,7 +63,9 @@ target_compile_options(pislide PRIVATE -Wall -Werror -g -DTINYEXIF_NO_XMP_SUPPOR
     -I${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/QR-Code-generator)
 
 # Libraries we need.
-target_link_libraries(pislide PRIVATE raylib sqlite3 cpr::cpr nlohmann_json::nlohmann_json raylib tomlplusplus::tomlplusplus)
+target_link_libraries(pislide PRIVATE
+    raylib sqlite3 cpr::cpr nlohmann_json::nlohmann_json
+    tomlplusplus::tomlplusplus spdlog)
 if(APPLE)
     target_link_libraries(pislide PRIVATE
         "-framework OpenGL"
@@ -92,7 +104,8 @@ add_executable(test-twilio
 target_compile_options(test-twilio PRIVATE -Wall -Werror -g)
 
 # Libraries we need.
-target_link_libraries(test-twilio PRIVATE cpr::cpr nlohmann_json::nlohmann_json tomlplusplus::tomlplusplus)
+target_link_libraries(test-twilio PRIVATE cpr::cpr nlohmann_json::nlohmann_json
+    tomlplusplus::tomlplusplus spdlog)
 
 target_compile_options(test-twilio PRIVATE -DTEST_TWILIO)
 

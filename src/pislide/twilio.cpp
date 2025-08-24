@@ -3,6 +3,8 @@
 
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/std.h>
 
 #include "twilio.h"
 
@@ -30,8 +32,8 @@ namespace {
                 cpr::Authentication{config.twilioSid, config.twilioToken, cpr::AuthMode::BASIC},
                 cpr::Header{{"User-Agent", USER_AGENT}});
         if (r.status_code != 200) {
-            std::cerr << "Got status code " << r.status_code
-                << " fetching Twilio information at " << path << '\n';
+            spdlog::warn("Got status code {} fetching Twilio information at {}",
+                    r.status_code, path);
             return nullptr;
         }
 
@@ -45,8 +47,8 @@ namespace {
                 cpr::Authentication{config.twilioSid, config.twilioToken, cpr::AuthMode::BASIC},
                 cpr::Header{{"User-Agent", USER_AGENT}});
         if (r.status_code != 200 && r.status_code != 204) {
-            std::cerr << "Got status code " << r.status_code
-                << " deleting Twilio resource at " << path << '\n';
+            spdlog::warn("Got status code {} deleting Twilio resource at {}",
+                    r.status_code, path);
             return false;
         }
 
@@ -56,13 +58,13 @@ namespace {
     // Download and save the image at the specified Twilio-relative path (after
     // the domain name). Returns whether successful.
     bool downloadImage(std::string const &path, std::filesystem::path const &pathname) {
-        std::cout << "Fetching Twilio photo to " << pathname << '\n';
+        spdlog::info("Fetching Twilio photo to {}", pathname);
 
         // Make sure the directory exists.
         std::filesystem::path dir = pathname.parent_path();
         bool createdDir = std::filesystem::create_directories(dir);
         if (createdDir) {
-            std::cout << "Created Twilio download directory " << dir << '\n';
+            spdlog::info("Created Twilio download directory {}", dir);
         }
 
         // Stream the file.
@@ -71,8 +73,8 @@ namespace {
                 cpr::Url{URL_BASE + path},
                 cpr::Header{{"User-Agent", USER_AGENT}});
         if (r.status_code != 200) {
-            std::cerr << "Got status code " << r.status_code
-                << " fetching Twilio image at " << path << '\n';
+            spdlog::warn("Got status code {} fetching Twilio image at {}",
+                    r.status_code, path);
             return false;
         }
         return true;
@@ -111,10 +113,10 @@ std::vector<std::shared_ptr<TwilioImage>> downloadTwilioImages(
 
     std::vector<std::shared_ptr<TwilioImage>> images;
 
-    std::cout << "Twilio: Fetching messages\n";
+    spdlog::info("Twilio: Fetching messages");
     auto messages = fetchMessages(config);
     for (auto message : messages) {
-        std::cout << "Twilio: Processing message " << message->uri << '\n';
+        spdlog::info("Twilio: Processing message {}", message->uri);
         bool allSuccess = true;
         if (!message->mediaListUrl.empty()) {
             auto medias = fetchJson(message->mediaListUrl, config);
@@ -170,13 +172,15 @@ int main(int argc, char *argv[]) {
     if (false) {
         auto messages = fetchMessages(config);
         for (auto message : messages) {
-            std::cout << message->sourcePhoneNumber << " " << message->dateSent << " " << message->mediaListUrl << '\n';
+            spdlog::info("{} {} {}", message->sourcePhoneNumber,
+                    message->dateSent, message->mediaListUrl);
         }
     }
     if (true) {
         auto images = downloadTwilioImages(false, true, config);
         for (auto image : images) {
-            std::cout << image->sourcePhoneNumber << " " << image->dateSent << " " << image->pathname << '\n';
+            spdlog::info("{} {} {}", image->sourcePhoneNumber,
+                    image->dateSent, image->pathname);
         }
     }
 }

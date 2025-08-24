@@ -1,6 +1,8 @@
 
 #include <iostream>
 
+#include <spdlog/spdlog.h>
+
 #include "twiliofetcher.h"
 #include "util.h"
 
@@ -10,7 +12,7 @@ TwilioFetcher::TwilioFetcher(Config const &config)
 
 void TwilioFetcher::initiateFetch() {
     // We don't want these to queue up, one is enough.
-    std::cout << "TwilioFetcher: Initiating fetch\n";
+    spdlog::info("TwilioFetcher: Initiating fetch");
     mExecutor.clearRequestQueue();
     mExecutor.ask(Request {
         .deleteMessages = mDeleteMessages,
@@ -35,7 +37,7 @@ std::vector<std::shared_ptr<TwilioImage>> TwilioFetcher::get() {
 }
 
 TwilioFetcher::Response TwilioFetcher::fetchImagesInThread(Request const &request) {
-    std::cout << "TwilioFetcher: Fetch in thread\n";
+    spdlog::info("TwilioFetcher: Fetch in thread");
     return Response {
         .images = downloadTwilioImages(
                 request.deleteMessages, request.deleteImages, request.config),

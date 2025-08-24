@@ -2,7 +2,8 @@
 #include <cmath>
 #include <sstream>
 
-#include "raylib.h"
+#include <raylib.h>
+#include <spdlog/spdlog.h>
 
 #include "slideshow.h"
 #include "util.h"
@@ -173,7 +174,7 @@ void Slideshow::handleKeyboard() {
     // Unicode code point.
     int ch = GetCharPressed();
     if (ch != KEY_NULL) {
-        std::cout << "Got char " << ch << '\n'; // TODO remove
+        spdlog::debug("Got char {}", ch);
         /*
         if self.prompting_email:
             if ch == 27: # ESC
@@ -243,14 +244,14 @@ void Slideshow::handleKeyboard() {
             // Don't allow rating during a party, the stars aren't visible for feedback.
             ratePhoto(ch - '1' + 1);
         } else {
-            std::cout << "Got unknown char " << ch << '\n'; // TODO remove
+            spdlog::debug("Got unknown char {}", ch);
         }
     }
 
     // Non-character keys.
     int key = GetKeyPressed();
     if (key != 0) {
-        // std::cout << "Got key " << key << '\n'; // TODO remove
+        // spdlog::debug("Got key {}", key);
         if (key == KEY_LEFT) {
             jumpRelative(-1);
         } else if (key == KEY_RIGHT) {
@@ -258,7 +259,7 @@ void Slideshow::handleKeyboard() {
         } else if (key >= KEY_F1 and key <= KEY_F12) {
             // slideshow.play_radio_station(key - KEY_F1);
         } else {
-            std::cout << "Got unknown key " << key << '\n'; // TODO remove
+            spdlog::debug("Got unknown key {}", key);
         }
     }
 }
@@ -411,7 +412,7 @@ void Slideshow::insertPhoto(Photo const &photo) {
         mDbPhotos.push_back(photo);
         mTime = 0;
     } else {
-        std::cout << "Slideshow::insertPhoto(" << photo.id << ")\n";
+        spdlog::info("Slideshow::insertPhoto({})", photo.id);
 
         // Get global photo index. This number goes on forever, not wrapping.
         int photoIndex = getCurrentPhotoIndex();
