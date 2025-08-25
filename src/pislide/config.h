@@ -125,6 +125,23 @@ struct Config final {
     std::string twilioQrCode;
 
     /**
+     * Directory below rootDir to store web-uploaded photos. Defaults to "web".
+     * Leave empty to disable to web server.
+     */
+    std::string webSubdir;
+
+    /**
+     * Hostname to bind to for the web server. Defaults to "0.0.0.0"
+     * (any interface on the local machine).
+     */
+    std::string webHostname;
+
+    /**
+     * Port to bind to for the web server. Defaults to 8080.
+     */
+    int webPort;
+
+    /**
      * Set default values.
      */
     Config();

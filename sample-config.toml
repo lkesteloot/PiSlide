@@ -60,3 +60,7 @@ subdir = "twilio"        # Where to store images, relative to root_dir.
 message = "Text photos to 415-555-5555"
 qr_code = "sms:4155555555"
 
+[web]
+subdir = "web"
+hostname = "0.0.0.0"
+port = 8080

@@ -354,7 +354,7 @@ void Slideshow::drawDebug() {
         Color color = WHITE;
         if (logMessage.contains("[debug]")) {
             color = GRAY;
-        } else if (logMessage.contains("[warn]")) {
+        } else if (logMessage.contains("[warning]")) {
             color = YELLOW;
         } else if (logMessage.contains("[error]")) {
             color = RED;

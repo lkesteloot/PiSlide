@@ -42,6 +42,12 @@ FetchContent_Declare(spdlog
     GIT_TAG v1.15.3) # https://github.com/gabime/spdlog/releases
 FetchContent_MakeAvailable(spdlog)
 
+# Fetch and build cpp-httplib.
+FetchContent_Declare(httplib
+    GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
+    GIT_TAG v0.25.0) # https://github.com/yhirose/cpp-httplib/releases
+FetchContent_MakeAvailable(httplib)
+
 # Name of the project, using C++.
 project(PiSlide LANGUAGES CXX)
 
@@ -65,7 +71,7 @@ target_compile_options(pislide PRIVATE -Wall -Werror -g -DTINYEXIF_NO_XMP_SUPPOR
 # Libraries we need.
 target_link_libraries(pislide PRIVATE
     raylib sqlite3 cpr::cpr nlohmann_json::nlohmann_json
-    tomlplusplus::tomlplusplus spdlog)
+    tomlplusplus::tomlplusplus spdlog httplib)
 if(APPLE)
     target_link_libraries(pislide PRIVATE
         "-framework OpenGL"

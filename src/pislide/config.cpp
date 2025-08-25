@@ -25,8 +25,9 @@ namespace {
 }
 
 Config::Config() :
-    slideDisplayTime(12), slideTransitionTime(2), maxPauseTime(60*60), maxBusTime(60*60), minRating(3),
-    minDays(0), maxDays(0), windowWidth(0), windowHeight(0) {}
+    slideDisplayTime(12), slideTransitionTime(2), maxPauseTime(60*60), maxBusTime(60*60),
+    minRating(3), minDays(0), maxDays(0), windowWidth(0), windowHeight(0),
+    webSubdir("web"), webHostname("0.0.0.0"), webPort(8080) {}
 
 bool Config::readConfigFile(std::filesystem::path const &pathname) {
     try {
@@ -122,6 +123,18 @@ bool Config::readConfigFile(std::filesystem::path const &pathname) {
 
         if (auto value = config.at_path("twilio.qr_code").value<std::string>()) {
             this->twilioQrCode = *value;
+        }
+
+        if (auto value = config.at_path("web.subdir").value<std::string>()) {
+            this->webSubdir = *value;
+        }
+
+        if (auto value = config.at_path("web.hostname").value<std::string>()) {
+            this->webHostname = *value;
+        }
+
+        if (auto value = config.at_path("web.port").value<int>()) {
+            this->webPort = *value;
         }
     } catch (toml::parse_error const &err) {
         spdlog::error("Problem with config file {}: {} at line {}",

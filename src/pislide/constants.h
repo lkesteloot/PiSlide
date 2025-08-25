@@ -1,8 +1,10 @@
 
 #pragma once
 
+// Pixels around the edge where we don't draw text.
 constexpr float DISPLAY_MARGIN = 50;
 
+// Size of the star icon.
 constexpr float STAR_SIZE = 30;
 
 // Number of pixels to make transparent at the border of the image to

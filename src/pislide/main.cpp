@@ -28,6 +28,7 @@
 #include "label.h"
 #include "twiliofetcher.h"
 #include "constants.h"
+#include "webserver.h"
 
 namespace {
     constexpr int MAX_FILE_WARNING_COUNT = 10;
@@ -328,6 +329,45 @@ namespace {
         return goodPhotos;
     }
 
+    /**
+     * Guesses a file extension for the given content type.
+     */
+    std::string guessExtensionForContentType(std::string const &contentType) {
+        if (contentType == "image/jpeg") {
+            return ".jpg";
+        }
+        if (contentType == "image/png") {
+            return ".png";
+        }
+        if (contentType == "image/webp") {
+            return ".webp";
+        }
+        if (contentType == "image/gif") {
+            return ".gif";
+        }
+        return ".bin";
+    }
+
+    /**
+     * Returns a filename (with the given prefix and suffix) for a file in the
+     * specified directory that's guaranteed to not refer to an existing file.
+     */
+    std::filesystem::path newFilenameInDirectory(std::filesystem::path const &absoluteDir,
+            std::string const &prefix, std::string const &suffix) {
+
+        int counter = 1;
+
+        // Okay this sounds slow but really we only have a few dozen files in here.
+        while (true) {
+            std::filesystem::path filename = fmt::format("{}{:08}{}", prefix, counter, suffix);
+            std::filesystem::path absolutePathname = absoluteDir / filename;
+            if (!std::filesystem::exists(absolutePathname)) {
+                return filename;
+            }
+            counter += 1;
+        }
+    }
+
     void fetchTwilioImages(TwilioFetcher &twilioFetcher,
             Database const &database,
             Config const &config,
@@ -349,11 +389,62 @@ namespace {
             // and the database work to avoid that.
             int32_t photoId = handleNewAndRenamedFile(database, config, image->pathname);
 
-            // Fetch back from database and fix up pathname.
+            // Fetch back from database and fix up pathnames.
             std::optional<Photo> photo = database.getPhotoById(photoId);
             if (photo) {
                 photo->pathname = image->pathname;
                 photo->absolutePathname = config.rootDir / photo->pathname;
+                slideshow.insertPhoto(*photo);
+            } else {
+                spdlog::error("Didn't find expected photo {}", photoId);
+            }
+        }
+    }
+
+    void fetchWebUploadImages(ThreadSafeQueue<WebUpload> &queue,
+            Database const &database,
+            Config const &config,
+            Slideshow &slideshow) {
+
+        while (true) {
+            // See if any images came in from the web thread. If so, process them
+            // and show them next.
+            auto upload = queue.try_dequeue();
+            if (!upload) {
+                break;
+            }
+
+            // Determine extension.
+            std::string extension = guessExtensionForContentType(upload->contentType);
+
+            // Come up with pathname.
+            std::filesystem::path absoluteDir = config.rootDir / config.webSubdir;
+            std::filesystem::path filename = newFilenameInDirectory(absoluteDir, "web", extension);
+            std::filesystem::path pathname = config.webSubdir / filename;
+            std::filesystem::path absolutePathname = config.rootDir / pathname;
+
+            // Create the directory if necessary.
+            bool createdDir = std::filesystem::create_directories(absoluteDir);
+            if (createdDir) {
+                spdlog::info("Created web upload directory {}", absoluteDir);
+            }
+
+            // Write the file to disk.
+            spdlog::info("Saving web file to {}", pathname);
+            std::ofstream ofs(absolutePathname, std::ios::binary);
+            ofs << upload->content;
+            ofs.close();
+
+            // Compute hash, add to database. This takes a bit of time and
+            // causes a hiccup in the animation. We'd have to split the hash
+            // and the database work to avoid that.
+            int32_t photoId = handleNewAndRenamedFile(database, config, pathname);
+
+            // Fetch back from database and fix up pathnames.
+            std::optional<Photo> photo = database.getPhotoById(photoId);
+            if (photo) {
+                photo->pathname = pathname;
+                photo->absolutePathname = absolutePathname;
                 slideshow.insertPhoto(*photo);
             } else {
                 spdlog::error("Didn't find expected photo {}", photoId);
@@ -395,13 +486,15 @@ namespace {
             return 1;
         }
 
+        // Start the web server for uploading photos.
+        ThreadSafeQueue<WebUpload> webUploadQueue;
+        std::unique_ptr<WebServer> webServer = startWebServer(config, webUploadQueue);
+
         // TODO upgrade the schema.
 
         // Recursively read the photo tree from the disk.
         std::set<std::filesystem::path> diskPathnames = traverseDirectoryTree(config);
         spdlog::info("Photos on disk: {:L}", diskPathnames.size());
-
-        // TODO optionally resize images.
 
         // Get all photo files from the database.
         std::vector<PhotoFile> dbPhotoFiles = database.getAllPhotoFiles();
@@ -474,6 +567,7 @@ namespace {
 
             while (slideshow.loopRunning()) {
                 fetchTwilioImages(twilioFetcher, database, config, slideshow);
+                fetchWebUploadImages(webUploadQueue, database, config, slideshow);
                 slideshow.prefetch();
                 slideshow.move();
                 slideshow.draw(starTexture, qrCode);
