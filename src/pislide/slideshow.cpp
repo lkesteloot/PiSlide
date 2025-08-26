@@ -65,7 +65,7 @@ void Slideshow::move() {
     }
 }
 
-void Slideshow::draw(Texture const &starTexture, qrcodegen::QrCode const &qrCode) {
+void Slideshow::draw(Texture const &starTexture, std::optional<qrcodegen::QrCode> const &qrCode) {
     auto cs = getCurrentSlides();
 
     BeginDrawing();
@@ -74,6 +74,8 @@ void Slideshow::draw(Texture const &starTexture, qrcodegen::QrCode const &qrCode
     float fade = mDebug ? 0.3f : 1.0f;
     Color fadeColor = Fade(WHITE, fade);
 
+    bool havePartyMessage = mParty && !mConfig.partyMessage.empty();
+
     // Check configured here because there's a chance that we'll
     // get a loaded slide from the loader between the move and
     // the draw, meaning that the draw will happen before it's
@@ -81,11 +83,11 @@ void Slideshow::draw(Texture const &starTexture, qrcodegen::QrCode const &qrCode
     // causes problems (despite zero alpha).
     if (cs.currentSlide && cs.currentSlide->configured()) {
         cs.currentSlide->draw(mConfig, mTextWriter, starTexture,
-                mScreenWidth, mScreenHeight, fade, !mParty);
+                mScreenWidth, mScreenHeight, fade, !havePartyMessage);
     }
     if (cs.nextSlide && cs.nextSlide->configured()) {
         cs.nextSlide->draw(mConfig, mTextWriter, starTexture,
-                mScreenWidth, mScreenHeight, fade, !mParty);
+                mScreenWidth, mScreenHeight, fade, !havePartyMessage);
     }
 
     // Reset any slide we didn't draw so that next time it's drawn it can jump
@@ -106,22 +108,26 @@ void Slideshow::draw(Texture const &starTexture, qrcodegen::QrCode const &qrCode
     // Party mode:
     if (mParty) {
         // Draw Twilio instructions.
-        mTextWriter.write(mConfig.twilioMessage,
-                Vector2 { mScreenWidth/2.0f, mScreenHeight - DISPLAY_MARGIN },
-                48, fadeColor, TextWriter::Alignment::CENTER, TextWriter::Alignment::END);
+        if (havePartyMessage) {
+            mTextWriter.write(mConfig.partyMessage,
+                    Vector2 { mScreenWidth/2.0f, mScreenHeight - DISPLAY_MARGIN },
+                    48, fadeColor, TextWriter::Alignment::CENTER, TextWriter::Alignment::END);
+        }
 
         // Draw QR code.
-        int border = 1;
-        int size = qrCode.getSize();
-        int moduleSize = 5;
-        for (int y = -border; y < size + border; y++) {
-            for (int x = -border; x < size + border; x++) {
-                bool dark = qrCode.getModule(x, y);
-                Color moduleColor = Fade(dark ? BLACK : DARKGRAY, fade);
-                DrawRectangle(
-                        mScreenWidth - DISPLAY_MARGIN + (x - size - border)*moduleSize,
-                        mScreenHeight - DISPLAY_MARGIN + (y - size - border)*moduleSize,
-                        moduleSize, moduleSize, moduleColor);
+        if (qrCode) {
+            int border = 1;
+            int size = qrCode->getSize();
+            int moduleSize = 5;
+            for (int y = -border; y < size + border; y++) {
+                for (int x = -border; x < size + border; x++) {
+                    bool dark = qrCode->getModule(x, y);
+                    Color moduleColor = Fade(dark ? BLACK : DARKGRAY, fade);
+                    DrawRectangle(
+                            mScreenWidth - DISPLAY_MARGIN + (x - size - border)*moduleSize,
+                            mScreenHeight - DISPLAY_MARGIN + (y - size - border)*moduleSize,
+                            moduleSize, moduleSize, moduleColor);
+                }
             }
         }
     }

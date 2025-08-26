@@ -544,8 +544,11 @@ namespace {
         SetTextureFilter(starTexture, TEXTURE_FILTER_TRILINEAR);
 
         // Create the party mode QR code.
-        qrcodegen::QrCode qrCode = qrcodegen::QrCode::encodeText(
-                config.twilioQrCode.c_str(), qrcodegen::QrCode::Ecc::LOW);
+        std::optional<qrcodegen::QrCode> qrCode;
+        if (!config.partyQrCode.empty()) {
+            qrCode = qrcodegen::QrCode::encodeText(
+                    config.partyQrCode.c_str(), qrcodegen::QrCode::Ecc::LOW);
+        }
 
         // Match Python version FPS.
         SetTargetFPS(40);

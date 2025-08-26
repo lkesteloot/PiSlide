@@ -2,6 +2,7 @@
 #pragma once
 
 #include <vector>
+#include <optional>
 
 #include "qrcodegen.hpp"
 
@@ -111,7 +112,7 @@ public:
     bool loopRunning() const;
     void prefetch();
     void move();
-    void draw(Texture const &starTexture, qrcodegen::QrCode const &qrCode);
+    void draw(Texture const &starTexture, std::optional<qrcodegen::QrCode> const &qrCode);
     void handleKeyboard();
     void insertPhoto(Photo const &photo);
     bool isParty() const { return mParty; }

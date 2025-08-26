@@ -98,6 +98,19 @@ struct Config final {
     std::set<std::string> badFilePrefixes;
 
     /**
+     * Message to display when in party mode. Should display the Twilio
+     * phone number to SMS photos.
+     */
+    std::string partyMessage;
+
+    /**
+     * URL to put in QR code when in party mode. Should be a full "sms:" URL
+     * for the phone number to SMS photos, such as "sms:7035551212", for Twilio;
+     * or a web URL for web upload. Leave empty to not display a QR code.
+     */
+    std::string partyQrCode;
+
+    /**
      * Twilio account string ID, or an empty string to disable Twilio.
      */
     std::string twilioSid;
@@ -111,18 +124,6 @@ struct Config final {
      * Directory below rootDir to store fetched Twilio photos.
      */
     std::filesystem::path twilioSubdir;
-
-    /**
-     * Message to display when in party mode. Should display the Twilio
-     * phone number to SMS photos.
-     */
-    std::string twilioMessage;
-
-    /**
-     * URL to put in QR code when in party mode. Should be a full "sms:" URL
-     * for the phone number to SMS photos, such as "sms:7035551212".
-     */
-    std::string twilioQrCode;
 
     /**
      * Directory below rootDir to store web-uploaded photos. Defaults to "web".

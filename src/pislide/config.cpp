@@ -105,6 +105,14 @@ bool Config::readConfigFile(std::filesystem::path const &pathname) {
             }
         }
 
+        if (auto value = config.at_path("party.message").value<std::string>()) {
+            this->partyMessage = *value;
+        }
+
+        if (auto value = config.at_path("party.qr_code").value<std::string>()) {
+            this->partyQrCode = *value;
+        }
+
         if (auto value = config.at_path("twilio.sid").value<std::string>()) {
             this->twilioSid = *value;
         }
@@ -115,14 +123,6 @@ bool Config::readConfigFile(std::filesystem::path const &pathname) {
 
         if (auto value = config.at_path("twilio.subdir").value<std::string>()) {
             this->twilioSubdir = *value;
-        }
-
-        if (auto value = config.at_path("twilio.message").value<std::string>()) {
-            this->twilioMessage = *value;
-        }
-
-        if (auto value = config.at_path("twilio.qr_code").value<std::string>()) {
-            this->twilioQrCode = *value;
         }
 
         if (auto value = config.at_path("web.subdir").value<std::string>()) {

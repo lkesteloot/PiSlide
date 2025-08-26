@@ -51,14 +51,16 @@ token = ""
 agency = "SF"
 stop_code = "12345"
 
+[party]
+qr_code = "sms:4155555555" # Or http URL for web upload.
+message = "Text photos to 415-555-5555"
+
 # Fill this in if you want to be able to send photos to the slideshow program
 # using text messages. Requires a Twilio account and phone number.
 [twilio]
 sid = ""                 # E.g., "ECbf..."
 token = ""               # The secret token string.
 subdir = "twilio"        # Where to store images, relative to root_dir.
-message = "Text photos to 415-555-5555"
-qr_code = "sms:4155555555"
 
 [web]
 subdir = "web"
