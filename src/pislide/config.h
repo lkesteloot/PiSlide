@@ -132,6 +132,11 @@ struct Config final {
     std::string webSubdir;
 
     /**
+     * Path after hostname where users will be hitting the web server.
+     */
+    std::string webPath;
+
+    /**
      * Hostname to bind to for the web server. Defaults to "0.0.0.0"
      * (any interface on the local machine).
      */

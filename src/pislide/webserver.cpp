@@ -40,13 +40,13 @@ std::unique_ptr<WebServer> startWebServer(Config const &config, ThreadSafeQueue<
                 req.method, req.path, res.status);
     });
 
-    auto success = server->set_mount_point("/", "static");
+    auto success = server->set_mount_point(config.webPath, "src/web");
     if (!success) {
-        spdlog::error("The directory for static web files does not exist");
+        spdlog::error("The directory for web files does not exist");
         return std::unique_ptr<WebServer>();
     }
 
-    server->Post("/", [&queue, &config](httplib::Request const &req, httplib::Response &res) {
+    server->Post(config.webPath, [&queue, &config](httplib::Request const &req, httplib::Response &res) {
         // Access uploaded files.
         auto const &files = req.form.get_files("image");
         for (auto const &file : files) {
@@ -66,7 +66,7 @@ std::unique_ptr<WebServer> startWebServer(Config const &config, ThreadSafeQueue<
         }
 
         // Redirect back home with a message.
-        res.set_redirect("/?uploaded=1", httplib::StatusCode::SeeOther_303);
+        res.set_redirect(config.webPath + "?uploaded=1", httplib::StatusCode::SeeOther_303);
     });
 
     auto webThread = std::make_shared<std::thread>([server, &config]() {

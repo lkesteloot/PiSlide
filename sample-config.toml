@@ -64,5 +64,6 @@ subdir = "twilio"        # Where to store images, relative to root_dir.
 
 [web]
 subdir = "web"
+path = "/"
 hostname = "0.0.0.0"
 port = 8080

@@ -107,14 +107,14 @@ void Slideshow::draw(Texture const &starTexture, std::optional<qrcodegen::QrCode
 
     // Party mode:
     if (mParty) {
-        // Draw Twilio instructions.
+        // Draw party message.
         if (havePartyMessage) {
             mTextWriter.write(mConfig.partyMessage,
                     Vector2 { mScreenWidth/2.0f, mScreenHeight - DISPLAY_MARGIN },
                     48, fadeColor, TextWriter::Alignment::CENTER, TextWriter::Alignment::END);
         }
 
-        // Draw QR code.
+        // Draw party QR code.
         if (qrCode) {
             int border = 1;
             int size = qrCode->getSize();

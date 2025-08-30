@@ -11,14 +11,16 @@ TwilioFetcher::TwilioFetcher(Config const &config)
     mConfig(config) {}
 
 void TwilioFetcher::initiateFetch() {
-    // We don't want these to queue up, one is enough.
-    spdlog::info("TwilioFetcher: Initiating fetch");
-    mExecutor.clearRequestQueue();
-    mExecutor.ask(Request {
-        .deleteMessages = mDeleteMessages,
-        .deleteImages = mDeleteImages,
-        .config = mConfig,
-    });
+    if (!mConfig.twilioSid.empty() && !mConfig.twilioToken.empty()) {
+        // We don't want these to queue up, one is enough.
+        spdlog::info("TwilioFetcher: Initiating fetch");
+        mExecutor.clearRequestQueue();
+        mExecutor.ask(Request {
+            .deleteMessages = mDeleteMessages,
+            .deleteImages = mDeleteImages,
+            .config = mConfig,
+        });
+    }
 }
 
 void TwilioFetcher::initiateFetch(double throttleSeconds) {

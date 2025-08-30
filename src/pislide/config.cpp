@@ -129,6 +129,10 @@ bool Config::readConfigFile(std::filesystem::path const &pathname) {
             this->webSubdir = *value;
         }
 
+        if (auto value = config.at_path("web.path").value<std::string>()) {
+            this->webPath = *value;
+        }
+
         if (auto value = config.at_path("web.hostname").value<std::string>()) {
             this->webHostname = *value;
         }
