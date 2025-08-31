@@ -419,7 +419,8 @@ namespace {
 
             // Come up with pathname.
             std::filesystem::path absoluteDir = config.rootDir / config.webSubdir;
-            std::filesystem::path filename = newFilenameInDirectory(absoluteDir, "web", extension);
+            std::filesystem::path filename = newFilenameInDirectory(absoluteDir,
+                    "web-upload-", extension);
             std::filesystem::path pathname = config.webSubdir / filename;
             std::filesystem::path absolutePathname = config.rootDir / pathname;
 

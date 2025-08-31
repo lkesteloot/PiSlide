@@ -459,8 +459,8 @@ void Slideshow::insertPhoto(Photo const &photo) {
         // Insert into our array.
         mDbPhotos.insert(mDbPhotos.begin() + wrappedPhotoIndex + 1, photo);
 
-        // Prefetch it.
-        prefetch();
+        // Jump to it.
+        jumpRelative(1);
     }
 }
 
