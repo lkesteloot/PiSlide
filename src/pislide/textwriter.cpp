@@ -16,7 +16,8 @@ std::shared_ptr<Font> TextWriter::getFont(float fontSize) {
     if (mFontCache.contains(roundedFontSize)) {
         font = mFontCache.at(roundedFontSize);
     } else {
-        font = makeFontSharedPtr(LoadFontEx("FreeSans.ttf", roundedFontSize, nullptr, 0));
+        font = makeFontSharedPtr(
+                LoadFontEx("src/resources/FreeSans.ttf", roundedFontSize, nullptr, 0));
         mFontCache[roundedFontSize] = font;
     }
 

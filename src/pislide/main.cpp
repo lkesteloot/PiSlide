@@ -540,7 +540,7 @@ namespace {
         spdlog::info("Window size: {}x{}", screenWidth, screenHeight);
 
         // Load the star icon.
-        Texture starTexture = LoadTexture("outline-star-256.png");
+        Texture starTexture = LoadTexture("src/resources/outline-star-256.png");
         GenTextureMipmaps(&starTexture);
         SetTextureFilter(starTexture, TEXTURE_FILTER_TRILINEAR);
 
