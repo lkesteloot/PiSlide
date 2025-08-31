@@ -116,18 +116,36 @@ void Slideshow::draw(Texture const &starTexture, std::optional<qrcodegen::QrCode
 
         // Draw party QR code.
         if (qrCode) {
+            // QR code sticker.
             int border = 1;
             int size = qrCode->getSize();
             int moduleSize = 5;
-            for (int y = -border; y < size + border; y++) {
-                for (int x = -border; x < size + border; x++) {
-                    bool dark = qrCode->getModule(x, y);
-                    Color moduleColor = Fade(dark ? BLACK : DARKGRAY, fade);
+            int stickerSize = (size + 2*border)*moduleSize;
+            // Upper-left of QR code:
+            int x = mScreenWidth - DISPLAY_MARGIN - stickerSize;
+            int y = mScreenHeight - DISPLAY_MARGIN - stickerSize;
+            Color darkColor = Fade(BLACK, fade);
+            Color lightColor = Fade(DARKGRAY, fade);
+            for (int yy = -border; yy < size + border; yy++) {
+                for (int xx = -border; xx < size + border; xx++) {
+                    bool dark = qrCode->getModule(xx, yy);
                     DrawRectangle(
-                            mScreenWidth - DISPLAY_MARGIN + (x - size - border)*moduleSize,
-                            mScreenHeight - DISPLAY_MARGIN + (y - size - border)*moduleSize,
-                            moduleSize, moduleSize, moduleColor);
+                            x + xx*moduleSize,
+                            y + yy*moduleSize,
+                            moduleSize, moduleSize,
+                            dark ? darkColor : lightColor);
                 }
+            }
+
+            // Instructions.
+            x += stickerSize/2;
+            y -= 15;
+            std::vector<std::string> lines = { "photo", "party", "upload", "Scan to" };
+            for (auto line : lines) {
+                mTextWriter.write(line, Vector2 { (float) x, (float) y },
+                        48, lightColor,
+                        TextWriter::Alignment::CENTER, TextWriter::Alignment::END);
+                y -= 37;
             }
         }
     }
