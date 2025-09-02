@@ -242,33 +242,47 @@ void Slideshow::handleKeyboard() {
             return false
             */
 
-        if (ch == 'Q') {
-            mQuit = true;
-        } else if (ch == 'r') {
-            rotatePhoto(-90);
-        } else if (ch == 'l') {
-            rotatePhoto(90);
-        } else if (ch == ' ') {
-            togglePause();
-        } else if (ch == 'D') {
-            toggleDebug();
-        } else if (ch == 'P') {
-            toggleParty();
-        } else if (ch == 'm') {
-            // slideshow.mute()
-        } else if (ch == 's') {
-            // slideshow.stop_music()
-        } else if (ch == 'e') {
-            // slideshow.prompt_email()
-        } else if (ch == 'b') {
-            toggleBus();
-        } else if (ch == 'T') {
-            // slideshow.toggle_twilio()
-        } else if (ch >= '1' and ch <= '5' and !mParty) {
-            // Don't allow rating during a party, the stars aren't visible for feedback.
-            ratePhoto(ch - '1' + 1);
-        } else {
-            spdlog::trace("Got unknown char {}", ch);
+        switch (ch) {
+            case 'Q':
+                mQuit = true;
+                break;
+            case 'r':
+                rotatePhoto(-90);
+                break;
+            case 'l':
+                rotatePhoto(90);
+                break;
+            case ' ':
+                togglePause();
+                break;
+            case 'D':
+                toggleDebug();
+                break;
+            case 'P':
+                toggleParty();
+                break;
+            case 'm':
+                // slideshow.mute()
+                break;
+            case 's':
+                // slideshow.stop_music()
+                break;
+            case 'e':
+                // slideshow.prompt_email()
+                break;
+            case 'b':
+                toggleBus();
+                break;
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+                ratePhoto(ch - '1' + 1);
+                break;
+            default:
+                spdlog::trace("Got unknown char {}", ch);
+                break;
         }
     }
 
