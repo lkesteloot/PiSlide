@@ -468,8 +468,9 @@ namespace {
         auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
         auto fileSink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
                 "logs/pislide", 1024*1024*10, 10);
+        auto ringBufferSink = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(DEBUG_LOG_COUNT);
         auto logger = std::make_shared<spdlog::logger>(
-                "logger", spdlog::sinks_init_list({consoleSink, fileSink}));
+                "logger", spdlog::sinks_init_list({consoleSink, fileSink, ringBufferSink}));
         logger->flush_on(spdlog::level::trace);
         logger->set_level(spdlog::level::debug);
         spdlog::set_default_logger(logger);
@@ -541,6 +542,9 @@ namespace {
 
         // Load the star icon.
         Texture starTexture = LoadTexture("src/resources/outline-star-256.png");
+        if (!IsTextureValid(starTexture)) {
+            spdlog::error("Can't load star texture");
+        }
         GenTextureMipmaps(&starTexture);
         SetTextureFilter(starTexture, TEXTURE_FILTER_TRILINEAR);
 
@@ -567,7 +571,8 @@ namespace {
 
         {
             // Nested scope to delete slideshow before we close the window.
-            Slideshow slideshow(dbPhotos, screenWidth, screenHeight, config, database);
+            Slideshow slideshow(dbPhotos, screenWidth, screenHeight, config, database,
+                    ringBufferSink);
 
             while (slideshow.loopRunning()) {
                 fetchTwilioImages(twilioFetcher, database, config, slideshow);

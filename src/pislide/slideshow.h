@@ -12,7 +12,6 @@
 #include "slidecache.h"
 #include "textwriter.h"
 #include "businfo.h"
-#include "constants.h"
 
 #include <spdlog/sinks/ringbuffer_sink.h>
 
@@ -88,21 +87,18 @@ public:
             int screenWidth,
             int screenHeight,
             Config const &config,
-            Database const &database)
+            Database const &database,
+            std::shared_ptr<spdlog::sinks::ringbuffer_sink_mt> ringBufferSink)
         : mDbPhotos(dbPhotos),
         mScreenWidth(screenWidth),
         mScreenHeight(screenHeight),
         mConfig(config),
         mDatabase(database),
         mSlideCache(screenWidth, screenHeight, makeBrokenImage(mTextWriter)),
-        mLogRingBufferSink(std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(DEBUG_LOG_COUNT)) {
+        mLogRingBufferSink(ringBufferSink) {
 
         // We'll handle this.
         SetExitKey(0);
-
-        // Add our own log sink. This call is not thread-safe, but currently nothing
-        // else modifies this vector.
-        spdlog::default_logger()->sinks().push_back(mLogRingBufferSink);
     }
 
     // Can't copy.
