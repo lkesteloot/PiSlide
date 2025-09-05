@@ -515,15 +515,15 @@ namespace {
 
         // Find a pathname for each photo.
         dbPhotos = assignPhotoPathnames(database, config, dbPhotos, diskPathnames);
+        spdlog::info("Photos found on disk: {}", dbPhotos.size());
 
-        // print("Photos after disk filter: %d" % (len(dbPhotos),))
         dbPhotos = filterPhotosByPathnameSubstring(dbPhotos);
-        // print("Photos after dir filter: %d" % (len(dbPhotos),))
+        spdlog::info("Photos after pathname filter: {}", dbPhotos.size());
 
         spdlog::info("Final photos to be shown: {}", dbPhotos.size());
 
         if (dbPhotos.empty()) {
-            spdlog::error("Error: No photos found");
+            spdlog::error("No photos found");
             return -1;
         }
 
