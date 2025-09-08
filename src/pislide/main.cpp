@@ -330,6 +330,29 @@ namespace {
     }
 
     /**
+     * Temporary filter for just one event.
+     */
+    std::vector<Photo> filterPhotosForEvent(std::vector<Photo> const &dbPhotos) {
+        // Max two years.
+        long twoYears = nowEpoch() - 365*2*24*60*60;
+
+        std::vector<Photo> goodPhotos;
+
+        for (auto &photo : dbPhotos) {
+            std::string pathname = photo.pathname.string();
+            bool eventName = pathname.find("Event Name") != std::string::npos;
+            bool badDir = pathname.find("Bad Dir") != std::string::npos;
+            bool recent = photo.date > twoYears;
+
+            if (eventName || (recent && !badDir)) {
+                goodPhotos.push_back(photo);
+            }
+        }
+
+        return goodPhotos;
+    }
+
+    /**
      * Guesses a file extension for the given content type.
      */
     std::string guessExtensionForContentType(std::string const &contentType) {
@@ -519,6 +542,9 @@ namespace {
 
         dbPhotos = filterPhotosByPathnameSubstring(dbPhotos);
         spdlog::info("Photos after pathname filter: {}", dbPhotos.size());
+
+        // dbPhotos = filterPhotosForEvent(dbPhotos);
+        // spdlog::info("Photos after event filter: {}", dbPhotos.size());
 
         spdlog::info("Final photos to be shown: {}", dbPhotos.size());
 
