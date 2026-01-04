@@ -329,6 +329,7 @@ namespace {
         return goodPhotos;
     }
 
+#if 0
     /**
      * Temporary filter for just one event.
      */
@@ -351,6 +352,7 @@ namespace {
 
         return goodPhotos;
     }
+#endif
 
     /**
      * Guesses a file extension for the given content type.

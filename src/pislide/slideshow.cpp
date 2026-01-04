@@ -167,7 +167,7 @@ Slideshow::CurrentSlides Slideshow::getCurrentSlides() {
         return cs;
     }
 
-    float slideTotalTime = mConfig.slideTotalTime();
+    double slideTotalTime = mConfig.slideTotalTime();
 
     cs.currentSlide = mSlideCache.get(photoByIndex(photoIndex));
     if (cs.currentSlide && !cs.currentSlide->swapZoom().has_value()) {
