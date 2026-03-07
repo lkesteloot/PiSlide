@@ -289,7 +289,8 @@ void Slideshow::handleKeyboard() {
     // Non-character keys.
     int key = GetKeyPressed();
     if (key != 0) {
-        // spdlog::debug("Got key {}", key);
+        // To debug the problem of arrow keys not working after a while:
+        spdlog::debug("Got key {}", key);
         if (key == KEY_LEFT) {
             jumpRelative(-1);
         } else if (key == KEY_RIGHT) {
@@ -303,8 +304,12 @@ void Slideshow::handleKeyboard() {
 }
 
 void Slideshow::jumpRelative(int deltaSlide) {
+    double oldTime = mTime;
     auto cs = getCurrentSlides();
     mTime = std::max(0.0, mTime + deltaSlide*mConfig.slideTotalTime() - cs.currentTimeOffset);
+    // To debug the problem of arrow keys not working after a while:
+    spdlog::debug("jumpRelative({}): {} = {} + {} - {}",
+            deltaSlide, mTime, oldTime, deltaSlide*mConfig.slideTotalTime(), cs.currentTimeOffset);
 }
 
 void Slideshow::togglePause() {
