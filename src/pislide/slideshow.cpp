@@ -247,10 +247,14 @@ void Slideshow::handleKeyboard() {
                 mQuit = true;
                 break;
             case 'r':
-                rotatePhoto(-90);
+                if (!mParty) {
+                    rotatePhoto(-90);
+                }
                 break;
             case 'l':
-                rotatePhoto(90);
+                if (!mParty) {
+                    rotatePhoto(90);
+                }
                 break;
             case ' ':
                 togglePause();
@@ -278,7 +282,9 @@ void Slideshow::handleKeyboard() {
             case '3':
             case '4':
             case '5':
-                ratePhoto(ch - '1' + 1);
+                if (!mParty) {
+                    ratePhoto(ch - '1' + 1);
+                }
                 break;
             default:
                 spdlog::trace("Got unknown char {}", ch);

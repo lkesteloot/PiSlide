@@ -30,6 +30,10 @@
 #include "constants.h"
 #include "webserver.h"
 
+#define SPECIAL_EVENT 0
+#define SPECIAL_EVENT_NAME "Event-Name"
+#define SPECIAL_EVENT_BAD_DIR "Bad-Dir-Name"
+
 namespace {
     constexpr int MAX_FILE_WARNING_COUNT = 10;
 
@@ -329,7 +333,7 @@ namespace {
         return goodPhotos;
     }
 
-#if 0
+#if SPECIAL_EVENT
     /**
      * Temporary filter for just one event.
      */
@@ -341,8 +345,8 @@ namespace {
 
         for (auto &photo : dbPhotos) {
             std::string pathname = photo.pathname.string();
-            bool eventName = pathname.find("Event Name") != std::string::npos;
-            bool badDir = pathname.find("Bad Dir") != std::string::npos;
+            bool eventName = pathname.find(SPECIAL_EVENT_NAME) != std::string::npos;
+            bool badDir = pathname.find(SPECIAL_EVENT_BAD_DIR) != std::string::npos;
             bool recent = photo.date > twoYears;
 
             if (eventName || (recent && !badDir)) {
@@ -545,8 +549,10 @@ namespace {
         dbPhotos = filterPhotosByPathnameSubstring(dbPhotos);
         spdlog::info("Photos after pathname filter: {}", dbPhotos.size());
 
-        // dbPhotos = filterPhotosForEvent(dbPhotos);
-        // spdlog::info("Photos after event filter: {}", dbPhotos.size());
+#if SPECIAL_EVENT
+        dbPhotos = filterPhotosForEvent(dbPhotos);
+        spdlog::info("Photos after special event filter: {}", dbPhotos.size());
+#endif
 
         spdlog::info("Final photos to be shown: {}", dbPhotos.size());
 
